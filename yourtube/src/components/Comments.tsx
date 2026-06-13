@@ -22,8 +22,12 @@ interface Comment {
 
 const commentValidation = (text: string) => {
   const trimmed = text.trim();
-  // Accept any language (Unicode). Only enforce non-empty and max length.
-  return trimmed.length > 0 && trimmed.length <= 2000;
+  if (trimmed.length === 0 || trimmed.length > 2000) return false;
+
+  // Allow Unicode letters, numbers, spaces and a small set of common punctuation.
+  // Disallow other special characters like @#$%^&*<>/{}[]|~` etc.
+  const allowedPattern = /^[\p{L}\p{N}\s.,?!'"():;+\-]+$/u;
+  return allowedPattern.test(trimmed);
 };
 
 const getCityFromIP = async () => {
@@ -42,6 +46,8 @@ const Comments = ({ videoId }: any) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [inlineError, setInlineError] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [translatedFrom, setTranslatedFrom] = useState<Record<string, string>>({});
@@ -70,7 +76,7 @@ const Comments = ({ videoId }: any) => {
     if (!user) return;
     if (!newComment.trim()) return;
     if (!commentValidation(newComment)) {
-      alert("Comment must be non-empty and under 2000 characters.");
+      setInlineError("Comment must be non-empty, under 2000 characters, and contain no special characters.");
       return;
     }
 
@@ -87,10 +93,11 @@ const Comments = ({ videoId }: any) => {
       if (res.data.comment) {
         setComments([res.data.comment, ...comments]);
         setNewComment("");
+        setInlineError(null);
       }
     } catch (error: any) {
       console.error("Error adding comment:", error);
-      alert(error?.response?.data?.message || "Failed to post comment.");
+      setInlineError(error?.response?.data?.message || "Failed to post comment.");
     } finally {
       setIsSubmitting(false);
     }
@@ -105,7 +112,7 @@ const Comments = ({ videoId }: any) => {
     if (!editingCommentId) return;
     if (!editText.trim()) return;
     if (!commentValidation(editText)) {
-      alert("Comment must be non-empty and under 2000 characters.");
+      setEditError("Comment must be non-empty, under 2000 characters, and contain no special characters.");
       return;
     }
     try {
@@ -121,10 +128,11 @@ const Comments = ({ videoId }: any) => {
         );
         setEditingCommentId(null);
         setEditText("");
+        setEditError(null);
       }
     } catch (error) {
       console.log(error);
-      alert("Unable to save comment edit. Please try again.");
+      setEditError("Unable to save comment edit. Please try again.");
     }
   };
 
@@ -141,13 +149,13 @@ const Comments = ({ videoId }: any) => {
 
   const handleReaction = async (commentId: string, action: "like" | "dislike") => {
     if (!user) {
-      alert("Please log in to like or dislike comments.");
+      setInlineError("Please log in to like or dislike comments.");
       return;
     }
 
     const userId = (user as any)._id || (user as any).id;
     if (!userId) {
-      alert("User ID not available. Please refresh and try again.");
+      setInlineError("User ID not available. Please refresh and try again.");
       return;
     }
 
@@ -174,7 +182,7 @@ const Comments = ({ videoId }: any) => {
       );
     } catch (error) {
       console.log(error);
-      alert("Unable to update reaction. Please try again.");
+      setInlineError("Unable to update reaction. Please try again.");
     } finally {
       setReactionLoading((prev) => ({ ...prev, [commentId]: false }));
     }
@@ -200,7 +208,7 @@ const Comments = ({ videoId }: any) => {
       }
     } catch (error: any) {
       console.error("Translation failed:", error);
-      alert(error?.response?.data?.message || "Translation failed. Please try again.");
+      setInlineError(error?.response?.data?.message || "Translation failed. Please try again.");
     } finally {
       setTranslating((prev) => ({ ...prev, [commentId]: false }));
     }
@@ -215,6 +223,7 @@ const Comments = ({ videoId }: any) => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{comments.length} Comments</h2>
       </div>
+      
 
       {user && (
         <div className="flex gap-4">
@@ -226,9 +235,15 @@ const Comments = ({ videoId }: any) => {
             <Textarea
               placeholder="Add a comment..."
               value={newComment}
-              onChange={(e: any) => setNewComment(e.target.value)}
+                onChange={(e: any) => {
+                  setNewComment(e.target.value);
+                  if (inlineError) setInlineError(null);
+                }}
               className="min-h-[80px] resize-none border-0 border-b-2 rounded-none focus-visible:ring-0"
             />
+              {inlineError && (
+                <div className="text-sm text-red-600">{inlineError}</div>
+              )}
             <div className="flex gap-2 justify-end">
               <Button
                 variant="ghost"
@@ -275,9 +290,15 @@ const Comments = ({ videoId }: any) => {
                     <div className="space-y-2">
                       <Textarea
                         value={editText}
-                        onChange={(e: any) => setEditText(e.target.value)}
+                        onChange={(e: any) => {
+                          setEditText(e.target.value);
+                          if (editError) setEditError(null);
+                        }}
                         className="min-h-[80px] resize-none border-0 border-b-2 rounded-none focus-visible:ring-0"
                       />
+                      {editError && (
+                        <div className="text-sm text-red-600">{editError}</div>
+                      )}
                       <div className="flex gap-2">
                         <Button onClick={handleUpdateComment}>Save</Button>
                         <Button

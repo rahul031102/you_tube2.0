@@ -4,16 +4,21 @@ import mongoose from "mongoose";
 const sanitizeComment = (text) => {
   if (!text) return false;
   const trimmed = text.trim();
-  // Allow any language / Unicode characters but ensure comment is non-empty
-  // and not excessively long to avoid abuse.
   if (trimmed.length === 0 || trimmed.length > 2000) return false;
+
+  // Allow Unicode letters, numbers, spaces and a small set of common punctuation.
+  // Disallow other special characters (e.g. @#$%^&*<>/{}[]|~` etc.).
+  // Uses Unicode property escapes for letters and numbers.
+  const allowedPattern = /^[\p{L}\p{N}\s.,?!'"():;+\-]+$/u;
+  if (!allowedPattern.test(trimmed)) return false;
+
   return true;
 };
 
 export const postcomment = async (req, res) => {
   const { commentbody, userid, videoid, usercommented, city } = req.body;
   if (!sanitizeComment(commentbody)) {
-    return res.status(400).json({ message: "Comment must be non-empty and under 2000 characters." });
+    return res.status(400).json({ message: "Comment must be non-empty, under 2000 characters, and contain no special characters." });
   }
 
   const commentdata = {
@@ -66,7 +71,7 @@ export const editcomment = async (req, res) => {
     return res.status(404).send("comment unavailable");
   }
   if (!sanitizeComment(commentbody)) {
-    return res.status(400).json({ message: "Comment must be non-empty and under 2000 characters." });
+    return res.status(400).json({ message: "Comment must be non-empty, under 2000 characters, and contain no special characters." });
   }
   try {
     const updatecomment = await comment.findByIdAndUpdate(
