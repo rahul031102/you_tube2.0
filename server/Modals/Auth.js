@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 const userschema = mongoose.Schema({
   email: { type: String, required: true },
   name: { type: String },
+  phone: { type: String },
   channelname: { type: String },
   description: { type: String },
   image: { type: String },

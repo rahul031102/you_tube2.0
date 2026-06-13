@@ -1,4 +1,4 @@
-import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import { signInWithPopup, signOut } from "firebase/auth";
 import { useState } from "react";
 import { createContext } from "react";
 import { provider, auth } from "./firebase";
@@ -7,8 +7,36 @@ import { useEffect, useContext } from "react";
 
 const UserContext = createContext();
 
+const detectLocation = async () => {
+  try {
+    const res = await fetch("https://ipapi.co/json");
+    const data = await res.json();
+    return {
+      region: data.region,
+      country: data.country_name,
+      countryCode: data.country_code,
+    };
+  } catch {
+    return {};
+  }
+};
+
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  // Holds the authenticated-but-not-yet-verified account while OTP is pending.
+  const [pendingAuth, setPendingAuth] = useState(null);
+
+  useEffect(() => {
+    const stored =
+      typeof window !== "undefined" ? localStorage.getItem("user") : null;
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored));
+      } catch {
+        localStorage.removeItem("user");
+      }
+    }
+  }, []);
 
   const login = (userdata) => {
     setUser(userdata);
@@ -16,6 +44,7 @@ export const UserProvider = ({ children }) => {
   };
   const logout = async () => {
     setUser(null);
+    setPendingAuth(null);
     localStorage.removeItem("user");
     try {
       await signOut(auth);
@@ -23,6 +52,25 @@ export const UserProvider = ({ children }) => {
       console.error("Error during sign out:", error);
     }
   };
+
+  const requestOtp = async (account, { forceEmail = false } = {}) => {
+    const location = await detectLocation();
+    try {
+      const { data } = await axiosInstance.post("/user/otp/request", {
+        userId: account._id,
+        forceEmail,
+        ...location,
+      });
+      return data;
+    } catch (error) {
+      const resp = error.response?.data;
+      if (resp?.code === "PHONE_REQUIRED") {
+        return { requiresPhone: true, message: resp.message };
+      }
+      throw error;
+    }
+  };
+
   const handlegooglesignin = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
@@ -33,7 +81,9 @@ export const UserProvider = ({ children }) => {
         image: firebaseuser.photoURL || "https://github.com/shadcn.png",
       };
       const response = await axiosInstance.post("/user/login", payload);
-      login(response.data.result);
+      const account = response.data.result;
+      const otp = await requestOtp(account);
+      setPendingAuth({ account, ...otp });
     } catch (error) {
       if (
         error.code === "auth/popup-closed-by-user" ||
@@ -44,33 +94,53 @@ export const UserProvider = ({ children }) => {
       console.error(error);
     }
   };
-  useEffect(() => {
-    let mounted = true;
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseuser) => {
-      if (!mounted) return;
-      if (firebaseuser) {
-        try {
-          const payload = {
-            email: firebaseuser.email,
-            name: firebaseuser.displayName,
-            image: firebaseuser.photoURL || "https://github.com/shadcn.png",
-          };
-          const response = await axiosInstance.post("/user/login", payload);
-          if (mounted) login(response.data.result);
-        } catch (error) {
-          console.error(error);
-          if (mounted) logout();
-        }
-      }
+
+  const verifyOtp = async (code) => {
+    if (!pendingAuth) return;
+    const { data } = await axiosInstance.post("/user/otp/verify", {
+      userId: pendingAuth.account._id,
+      otp: code,
     });
-    return () => {
-      mounted = false;
-      unsubscribe();
-    };
-  }, []);
+    login(data.user);
+    setPendingAuth(null);
+  };
+
+  const resendOtp = async ({ forceEmail = false } = {}) => {
+    if (!pendingAuth) return null;
+    const otp = await requestOtp(pendingAuth.account, { forceEmail });
+    setPendingAuth({ account: pendingAuth.account, ...otp });
+    return otp;
+  };
+
+  // Save a phone number for the pending account, then re-request an OTP.
+  const savePhoneForPending = async (phone) => {
+    if (!pendingAuth) return null;
+    const { data } = await axiosInstance.patch(
+      `/user/update/${pendingAuth.account._id}`,
+      { phone }
+    );
+    const account = data || { ...pendingAuth.account, phone };
+    const otp = await requestOtp(account);
+    setPendingAuth({ account, ...otp });
+    return otp;
+  };
+
+  const cancelOtp = () => setPendingAuth(null);
 
   return (
-    <UserContext.Provider value={{ user, login, logout, handlegooglesignin }}>
+    <UserContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        handlegooglesignin,
+        pendingAuth,
+        verifyOtp,
+        resendOtp,
+        savePhoneForPending,
+        cancelOtp,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

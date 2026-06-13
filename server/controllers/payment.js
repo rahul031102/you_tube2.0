@@ -1,8 +1,8 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
 import users from "../Modals/Auth.js";
 import paymentModel from "../Modals/payment.js";
+import { sendMail } from "../utils/mailer.js";
 
 const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -15,28 +15,6 @@ const PLAN_CONFIG = {
   gold: { amount: 10000, name: "Gold", description: "Unlimited watch time" },
 };
 
-const createTransporter = () => {
-  const host = process.env.EMAIL_HOST;
-  const port = Number(process.env.EMAIL_PORT || 587);
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
-  const secure = process.env.EMAIL_SECURE === "true";
-
-  if (!host || !user || !pass) {
-    return null;
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: {
-      user,
-      pass,
-    },
-  });
-};
-
 const sendInvoiceEmail = async ({
   to,
   invoiceNumber,
@@ -46,12 +24,6 @@ const sendInvoiceEmail = async ({
   orderId,
   paymentId,
 }) => {
-  const transporter = createTransporter();
-  if (!transporter) {
-    console.warn("Invoice email not sent: mail transporter not configured.");
-    return;
-  }
-
   const subject = `YourTube Invoice ${invoiceNumber}`;
   const html = `<div style="font-family: sans-serif;">
     <h2>YourTube Invoice</h2>
@@ -64,12 +36,7 @@ const sendInvoiceEmail = async ({
     <p>Thank you for upgrading your YourTube plan.</p>
   </div>`;
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM || process.env.EMAIL_USER || "no-reply@yourtube.com",
-    to,
-    subject,
-    html,
-  });
+  await sendMail({ to, subject, html });
 };
 
 export const createOrder = async (req, res) => {
