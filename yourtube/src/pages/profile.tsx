@@ -1,10 +1,37 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useUser } from "@/lib/AuthContext";
 import DownloadsContent from "@/components/DownloadsContent";
 import UpgradePremium from "@/components/UpgradePremium";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import axiosInstance from "@/lib/axiosinstance";
 
 const Profile = () => {
-  const { user } = useUser();
+  const { user, login } = useUser();
+  const [phone, setPhone] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPhone(user?.phone || "");
+  }, [user?.phone]);
+
+  const handleSavePhone = async () => {
+    if (!user?._id) return;
+    setSaving(true);
+    setStatus(null);
+    try {
+      const { data } = await axiosInstance.patch(`/user/update/${user._id}`, {
+        phone: phone.trim(),
+      });
+      login(data);
+      setStatus("Mobile number saved.");
+    } catch {
+      setStatus("Could not save mobile number.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <main className="flex-1 p-6">
@@ -44,6 +71,25 @@ const Profile = () => {
               <p className="text-sm text-gray-500">Email</p>
               <p className="mt-1 font-medium">{user?.email || "Not available"}</p>
             </div>
+          </div>
+          <div className="mt-6 rounded-xl border bg-gray-50 p-4">
+            <p className="text-sm text-gray-500">Mobile number</p>
+            <p className="text-xs text-gray-500 mb-2">
+              Used to send your login OTP when you sign in from outside South
+              India.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                placeholder="+91XXXXXXXXXX"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="sm:max-w-xs"
+              />
+              <Button onClick={handleSavePhone} disabled={saving}>
+                {saving ? "Saving..." : "Save number"}
+              </Button>
+            </div>
+            {status && <p className="mt-2 text-sm text-gray-600">{status}</p>}
           </div>
         </div>
 
