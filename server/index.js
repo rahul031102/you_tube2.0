@@ -4,6 +4,8 @@ import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
+import http from "http";
+import { Server as IOServer } from "socket.io";
 import userroutes from "./routes/auth.js";
 import videoroutes from "./routes/video.js";
 import likeroutes from "./routes/like.js";
@@ -12,6 +14,7 @@ import historyrroutes from "./routes/history.js";
 import commentroutes from "./routes/comment.js";
 import downloadroutes from "./routes/download.js";
 import paymentroutes from "./routes/payment.js";
+import callroutes from "./routes/call.js";
 
 const app = express();
 app.use(cors());
@@ -29,10 +32,24 @@ app.use("/watch", watchlaterroutes);
 app.use("/history", historyrroutes);
 app.use("/download", downloadroutes);
 app.use("/payment", paymentroutes);
+app.use("/call", callroutes);
 app.use("/comment", commentroutes);
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+// create HTTP server and attach Socket.IO for signaling (WebRTC)
+const server = http.createServer(app);
+const io = new IOServer(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
+
+// register signaling handlers
+import registerSignaling from "./signaling.js";
+registerSignaling(io);
+
+server.listen(PORT, () => {
   console.log(`server running on port ${PORT}`);
 });
 

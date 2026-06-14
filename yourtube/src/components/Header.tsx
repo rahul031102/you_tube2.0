@@ -1,5 +1,5 @@
-import { Bell, Menu, Mic, Search, User, VideoIcon } from "lucide-react";
-import React, { useState } from "react";
+import { Bell, Menu, Mic, Search, User, VideoIcon, PhoneCall } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { Input } from "./ui/input";
@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import Channeldialogue from "./channeldialogue";
 import { useRouter } from "next/router";
 import { useUser } from "@/lib/AuthContext";
+import { getSocket } from "@/lib/socket";
 
 const Header = () => {
   const { user, logout, handlegooglesignin } = useUser();
@@ -26,6 +27,34 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isdialogeopen, setisdialogeopen] = useState(false);
   const router = useRouter();
+  const [incoming, setIncoming] = useState<any>(null);
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (user?. _id) {
+      socket.emit("register", { userId: user._id });
+    }
+
+    const onIncoming = ({ fromUserId, roomId }: any) => {
+      setIncoming({ fromUserId, roomId });
+    };
+    socket.on("incoming-call", onIncoming);
+    const onRegisterFailed = ({ reason }: any) => {
+      console.warn("socket register failed", reason);
+    };
+    const onRegisterSuccess = ({ userId }: any) => {
+      // no-op for now
+      console.log("socket registered", userId);
+    };
+    socket.on("register-failed", onRegisterFailed);
+    socket.on("register-success", onRegisterSuccess);
+
+    return () => {
+      socket.off("incoming-call", onIncoming);
+      socket.off("register-failed", onRegisterFailed);
+      socket.off("register-success", onRegisterSuccess);
+    };
+  }, [user]);
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -80,6 +109,9 @@ const Header = () => {
       <div className="flex items-center gap-2">
         {user ? (
           <>
+            <Button variant="ghost" size="icon" onClick={() => router.push("/calls") }>
+              <PhoneCall className="w-6 h-6" />
+            </Button>
             <Button variant="ghost" size="icon">
               <VideoIcon className="w-6 h-6" />
             </Button>
@@ -144,6 +176,34 @@ const Header = () => {
           </>
         )}{" "}
       </div>
+      {incoming && (
+        <div className="fixed right-4 bottom-4 bg-white shadow rounded p-4 w-80 z-50">
+          <div className="font-medium">Incoming call</div>
+          <div className="text-sm text-gray-600">From: {incoming.fromUserId}</div>
+          <div className="mt-3 flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const socket = getSocket();
+                socket.emit("call-response", { fromUserId: incoming.fromUserId, targetUserId: user?._id, accepted: false, roomId: incoming.roomId });
+                setIncoming(null);
+              }}
+            >
+              Decline
+            </Button>
+            <Button
+              onClick={() => {
+                const socket = getSocket();
+                socket.emit("call-response", { fromUserId: incoming.fromUserId, targetUserId: user?._id, accepted: true, roomId: incoming.roomId });
+                setIncoming(null);
+                router.push(`/call/${incoming.fromUserId}?role=callee&room=${incoming.roomId}`);
+              }}
+            >
+              Accept
+            </Button>
+          </div>
+        </div>
+      )}
       <Channeldialogue
         isopen={isdialogeopen}
         onclose={() => setisdialogeopen(false)}

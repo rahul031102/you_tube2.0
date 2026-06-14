@@ -42,6 +42,14 @@ export const UserProvider = ({ children }) => {
     setUser(userdata);
     localStorage.setItem("user", JSON.stringify(userdata));
   };
+  const setToken = (token) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("token", token);
+    }
+    if (token) {
+      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
+  };
   const logout = async () => {
     setUser(null);
     setPendingAuth(null);
@@ -82,6 +90,11 @@ export const UserProvider = ({ children }) => {
       };
       const response = await axiosInstance.post("/user/login", payload);
       const account = response.data.result;
+      const token = response.data.token;
+      if (token) {
+        localStorage.setItem("token", token);
+        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      }
       const otp = await requestOtp(account);
       setPendingAuth({ account, ...otp });
     } catch (error) {

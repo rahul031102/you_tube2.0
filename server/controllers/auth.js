@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import users from "../Modals/Auth.js";
+import jwt from "jsonwebtoken";
 
 export const login = async (req, res) => {
   const { email, name, image } = req.body;
@@ -9,7 +10,9 @@ export const login = async (req, res) => {
 
     if (!existingUser) {
       const newUser = await users.create({ email, name, image, plan: "free" });
-      return res.status(201).json({ result: newUser });
+      // sign token
+      const token = jwt.sign({ id: newUser._id, email: newUser.email }, process.env.JWT_SECRET || "secret", { expiresIn: "7d" });
+      return res.status(201).json({ result: newUser, token });
     } else {
       if (!existingUser.plan) {
         existingUser.plan = "free";
@@ -17,7 +20,8 @@ export const login = async (req, res) => {
         existingUser.plan = "gold";
       }
       await existingUser.save();
-      return res.status(200).json({ result: existingUser });
+      const token = jwt.sign({ id: existingUser._id, email: existingUser.email }, process.env.JWT_SECRET || "secret", { expiresIn: "7d" });
+      return res.status(200).json({ result: existingUser, token });
     }
   } catch (error) {
     console.error("Login error:", error);
