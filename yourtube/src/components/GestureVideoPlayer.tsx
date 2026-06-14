@@ -391,7 +391,7 @@ export default function GestureVideoPlayer({
       </div>
 
       {/* Zone Information (optional - for user guidance) */}
-      <div className="text-xs text-gray-500 px-2 py-1 bg-gray-50 rounded border border-gray-200">
+      <div className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded border border-border">
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
             <p className="font-semibold text-gray-700">Left</p>

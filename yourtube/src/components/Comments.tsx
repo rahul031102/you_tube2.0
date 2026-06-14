@@ -345,7 +345,7 @@ const Comments = ({ videoId }: any) => {
                     </button>
                   </div>
                   {commentTranslationOpen[comment._id] && (
-                    <div className="mt-3 space-y-2 rounded-md bg-gray-50 p-3 text-sm text-gray-700">
+                    <div className="mt-3 space-y-2 rounded-md bg-muted p-3 text-sm text-gray-700">
                       <div className="flex flex-wrap items-center gap-2">
                         <label className="text-sm font-medium text-gray-600" htmlFor={`translateLang-${comment._id}`}>
                           Translate to:
@@ -359,7 +359,7 @@ const Comments = ({ videoId }: any) => {
                               [comment._id]: e.target.value,
                             }))
                           }
-                          className="rounded-md border bg-white px-2 py-1 text-sm"
+                          className="rounded-md border bg-background px-2 py-1 text-sm"
                         >
                           <option value="en">English</option>
                           <option value="hi">Hindi</option>
@@ -378,7 +378,7 @@ const Comments = ({ videoId }: any) => {
                         </Button>
                       </div>
                       {translations[comment._id] && (
-                        <div className="rounded-md bg-white p-3 text-sm text-gray-800">
+                        <div className="rounded-md bg-card p-3 text-sm text-foreground">
                           <span className="block text-xs uppercase tracking-wide text-gray-500">
                             Translated from {translatedFrom[comment._id] || "original"}
                           </span>

@@ -144,9 +144,9 @@ export default function PremiumPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 py-10">
+    <main className="min-h-screen bg-background py-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="mb-8 rounded-3xl border border-border bg-card p-8 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-3xl font-bold">Premium Plans</h1>
@@ -172,7 +172,7 @@ export default function PremiumPage() {
           {plans.map((plan) => {
             const isCurrent = user?.plan === plan.id || (user?.plan === "gold" && plan.id === "gold");
             return (
-              <div key={plan.id} className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div key={plan.id} className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold">{plan.name}</h2>
@@ -220,7 +220,7 @@ export default function PremiumPage() {
         </div>
 
         {(message || error) && (
-          <div className="mt-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm">
             {message && <p className="text-green-600">{message}</p>}
             {error && <p className="text-red-600">{error}</p>}
           </div>

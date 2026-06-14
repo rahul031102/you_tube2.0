@@ -18,7 +18,7 @@ export default function UpgradePremium({ onUpgradeSuccess }: UpgradePremiumProps
   const currentPlanLabel = user.plan === "bronze" ? "Bronze" : user.plan === "silver" ? "Silver" : "Free";
 
   return (
-    <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+    <div className="space-y-3 rounded-xl border border-border bg-muted p-4">
       <div>
         <p className="text-sm font-semibold">Upgrade your plan</p>
         <p className="text-sm text-gray-600">

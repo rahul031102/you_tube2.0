@@ -36,7 +36,7 @@ const Profile = () => {
   return (
     <main className="flex-1 p-6">
       <div className="max-w-4xl space-y-6">
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold">Profile</h1>
@@ -63,16 +63,16 @@ const Profile = () => {
             </div>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border bg-gray-50 p-4">
+            <div className="rounded-xl border bg-muted p-4">
               <p className="text-sm text-gray-500">Name</p>
               <p className="mt-1 font-medium">{user?.name || "Not available"}</p>
             </div>
-            <div className="rounded-xl border bg-gray-50 p-4">
+            <div className="rounded-xl border bg-muted p-4">
               <p className="text-sm text-gray-500">Email</p>
               <p className="mt-1 font-medium">{user?.email || "Not available"}</p>
             </div>
           </div>
-          <div className="mt-6 rounded-xl border bg-gray-50 p-4">
+          <div className="mt-6 rounded-xl border bg-muted p-4">
             <p className="text-sm text-gray-500">Mobile number</p>
             <p className="text-xs text-gray-500 mb-2">
               Used to send your login OTP when you sign in from outside South
@@ -93,7 +93,7 @@ const Profile = () => {
           </div>
         </div>
 
-        <section className="rounded-2xl border bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border bg-card p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
               <h2 className="text-2xl font-semibold">Downloads</h2>
@@ -104,7 +104,7 @@ const Profile = () => {
             <div>
               <a
                 href="/downloads"
-                className="inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
               >
                 Go to downloads page
               </a>

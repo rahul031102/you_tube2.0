@@ -172,7 +172,7 @@ const VideoInfo = ({ video }: any) => {
           <Button className="ml-4">Subscribe</Button>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center bg-gray-100 rounded-full">
+          <div className="flex items-center bg-muted rounded-full">
             <Button
               variant="ghost"
               size="sm"
@@ -204,7 +204,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className={`bg-gray-100 rounded-full ${
+            className={`bg-muted rounded-full ${
               isWatchLater ? "text-primary" : ""
             }`}
             onClick={handleWatchLater}
@@ -215,7 +215,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className="bg-gray-100 rounded-full"
+            className="bg-muted rounded-full"
           >
             <Share className="w-5 h-5 mr-2" />
             Share
@@ -223,7 +223,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className="bg-gray-100 rounded-full"
+            className="bg-muted rounded-full"
             onClick={handleDownloadVideo}
             disabled={downloadLoading}
           >
@@ -233,7 +233,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="icon"
-            className="bg-gray-100 rounded-full"
+            className="bg-muted rounded-full"
           >
             <MoreHorizontal className="w-5 h-5" />
           </Button>
@@ -247,7 +247,7 @@ const VideoInfo = ({ video }: any) => {
           <UpgradePremium onUpgradeSuccess={() => setShowUpgradeCTA(false)} />
         </div>
       )}
-      <div className="bg-gray-100 rounded-lg p-4">
+      <div className="bg-muted rounded-lg p-4">
         <div className="flex gap-4 text-sm font-medium mb-2">
           <span>{video.views.toLocaleString()} views</span>
           <span>{formatDistanceToNow(new Date(video.createdAt))} ago</span>
