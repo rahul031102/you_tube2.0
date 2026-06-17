@@ -1,6 +1,10 @@
 import video from "../Modals/video.js";
 import { exec } from "child_process";
 import path from "path";
+import { unlink } from "fs/promises";
+// import ffmpeg from "fluent-ffmpeg";
+
+// ffmpeg.setFfmpegPath("C:\\Users\\RAHUL\\AppData\\Local\\Microsoft\\WinGet\\Links\\ffmpeg.exe");
 
 export const uploadvideo = async (req, res) => {
   if (req.file === undefined) {
@@ -22,25 +26,39 @@ export const uploadvideo = async (req, res) => {
 
       // generate thumbnail using ffmpeg (requires ffmpeg binary on the system)
       try {
-        const videoPath = path.join(process.cwd(), "uploads", req.file.filename);
+        // Use the path provided by multer directly instead of reconstructing with process.cwd()
+        const videoPath = req.file.path;
         const thumbName = `thumb_${Date.now()}.jpg`;
-        const thumbPath = path.join(process.cwd(), "uploads", thumbName);
+        const thumbPath = path.join(path.dirname(videoPath), thumbName);
+        
         const cmd = `ffmpeg -i "${videoPath}" -ss 00:00:01.000 -vframes 1 "${thumbPath}"`;
-        exec(cmd, (err) => {
+        
+        console.log("[THUMB] Generating thumbnail...");
+        console.log("[THUMB] Video path:", videoPath);
+        console.log("[THUMB] Thumb path:", thumbPath);
+        console.log("[THUMB] Command:", cmd);
+        
+        exec(cmd, (err, stdout, stderr) => {
           if (!err) {
             try {
               file.thumbnail = thumbName;
-              file.save().catch((e) => console.error("thumb save error:", e));
+              file.save().catch((e) => {
+                console.error("[THUMB] Error saving thumbnail to DB:", e.message);
+              });
+              console.log("[THUMB] Thumbnail generated successfully:", thumbName);
             } catch (e) {
-              console.error("saving thumbnail to db failed:", e);
+              console.error("[THUMB] Failed to save thumbnail to DB:", e.message);
             }
           } else {
-            console.error("ffmpeg exec error:", err);
+            console.error("[THUMB] FFmpeg execution failed!");
+            console.error("[THUMB] Error message:", err.message);
+            console.error("[THUMB] stderr output:", stderr);
+            console.error("[THUMB] stdout output:", stdout);
           }
         });
 
       } catch (e) {
-        console.error("thumbnail generation failed:", e);
+        console.error("[THUMB] Thumbnail generation try-catch failed:", e.message);
       }
 
       return res.status(201).json("file uploaded successfully");
@@ -57,5 +75,69 @@ export const getallvideo = async (req, res) => {
   } catch (error) {
     console.error(" error:", error);
     return res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+export const deletevideo = async (req, res) => {
+  const { videoId } = req.params;
+  const { userId } = req.body;
+
+  try {
+    // Validate inputs
+    if (!videoId) {
+      return res.status(400).json({ message: "Video ID is required" });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ message: "User authentication required" });
+    }
+
+    // Find the video
+    const videoDoc = await video.findById(videoId);
+
+    if (!videoDoc) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    // Check if user is the owner/uploader
+    if (videoDoc.uploader !== userId) {
+      return res.status(403).json({ message: "You are not authorized to delete this video" });
+    }
+
+    console.log("[DELETE] Starting video deletion...");
+    console.log("[DELETE] Video ID:", videoId);
+    console.log("[DELETE] Uploader:", videoDoc.uploader);
+    console.log("[DELETE] Video path:", videoDoc.filepath);
+    console.log("[DELETE] Thumbnail:", videoDoc.thumbnail);
+
+    // Delete video file from uploads folder
+    if (videoDoc.filepath) {
+      try {
+        await unlink(videoDoc.filepath);
+        console.log("[DELETE] Video file deleted:", videoDoc.filepath);
+      } catch (e) {
+        console.warn("[DELETE] Video file not found or already deleted:", videoDoc.filepath);
+      }
+    }
+
+    // Delete thumbnail file if exists
+    if (videoDoc.thumbnail) {
+      try {
+        const thumbPath = path.join(path.dirname(videoDoc.filepath), videoDoc.thumbnail);
+        await unlink(thumbPath);
+        console.log("[DELETE] Thumbnail file deleted:", thumbPath);
+      } catch (e) {
+        console.warn("[DELETE] Thumbnail file not found or already deleted:", videoDoc.thumbnail);
+      }
+    }
+
+    // Delete video document from MongoDB
+    await video.findByIdAndDelete(videoId);
+    console.log("[DELETE] Video document deleted from database");
+
+    return res.status(200).json({ message: "Video deleted successfully" });
+  } catch (error) {
+    console.error("[DELETE] Error deleting video:", error.message);
+    return res.status(500).json({ message: "Failed to delete video" });
   }
 };

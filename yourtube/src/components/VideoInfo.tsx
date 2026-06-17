@@ -8,11 +8,26 @@ import {
   Share,
   ThumbsDown,
   ThumbsUp,
+  Trash2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
 import UpgradePremium from "@/components/UpgradePremium";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const VideoInfo = ({ video }: any) => {
   const [likes, setlikes] = useState(video.Like || 0);
@@ -25,6 +40,8 @@ const VideoInfo = ({ video }: any) => {
   const [downloadMessage, setDownloadMessage] = useState("");
   const [showUpgradeCTA, setShowUpgradeCTA] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // const user: any = {
   //   id: "1",
@@ -156,6 +173,37 @@ const VideoInfo = ({ video }: any) => {
     }
   };
 
+  const handleDeleteVideo = async () => {
+    if (!user) {
+      toast.error("Sign in to delete videos");
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await axiosInstance.delete(`/video/delete/${video._id}`, {
+        data: {
+          userId: user?._id,
+        },
+      });
+
+      toast.success("Video deleted successfully");
+      setShowDeleteDialog(false);
+
+      // Refresh the page after deletion
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || "Failed to delete video";
+      toast.error(message);
+      console.error("Delete error:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{video.videotitle}</h1>
@@ -230,13 +278,28 @@ const VideoInfo = ({ video }: any) => {
             <Download className="w-5 h-5 mr-2" />
             {downloadLoading ? "Downloading..." : "Download"}
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="bg-muted rounded-full"
-          >
-            <MoreHorizontal className="w-5 h-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="bg-muted rounded-full"
+              >
+                <MoreHorizontal className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {user?._id === video.uploader && (
+                <DropdownMenuItem
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="text-red-600 cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Video
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       {downloadMessage && (
@@ -267,6 +330,34 @@ const VideoInfo = ({ video }: any) => {
           {showFullDescription ? "Show less" : "Show more"}
         </Button>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Video</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this video? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleDeleteVideo}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

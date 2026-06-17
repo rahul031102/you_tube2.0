@@ -33,6 +33,14 @@ export default function GestureVideoPlayer({
   const { user } = useUser();
   const [limitReached, setLimitReached] = useState(false);
 
+  // Force reload video when video ID changes
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.load();
+      setLimitReached(false); // Reset watch limit when video changes
+    }
+  }, [video?._id]);
+
   const getWatchLimitSeconds = (plan?: string) => {
     const normalizedPlan = plan === "premium" ? "gold" : plan;
     if (normalizedPlan === "bronze") return 7 * 60;
@@ -306,6 +314,7 @@ export default function GestureVideoPlayer({
       <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-lg">
         {/* Native Video Element */}
         <video
+          key={video?._id}
           ref={videoRef}
           className="w-full h-full"
           controls
