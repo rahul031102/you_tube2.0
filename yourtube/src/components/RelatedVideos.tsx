@@ -9,6 +9,7 @@ interface RelatedVideosProps {
     videochanel: string;
     views: number;
     createdAt: string;
+     thumbnail?: string;
   }>;
 }
 const vid = "/video/vdo.mp4";
@@ -24,7 +25,8 @@ export default function RelatedVideos({ videos }: RelatedVideosProps) {
           <div className="relative w-40 aspect-video bg-muted rounded overflow-hidden flex-shrink-0">
             {video?.thumbnail ? (
               <img
-                src={`http://localhost:5000/uploads/${video.thumbnail}`}
+              src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/${video.thumbnail}`} 
+              // src={`http://localhost:5000/uploads/${video.thumbnail}`}
                 alt={video.videotitle}
                 className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
               />
