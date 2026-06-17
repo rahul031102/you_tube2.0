@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
+import dns from "dns";
 
+dns.setDefaultResultOrder("ipv4first");
 export const createTransporter = () => {
   const host = process.env.EMAIL_HOST;
   const port = Number(process.env.EMAIL_PORT || 587);
@@ -15,6 +17,7 @@ export const createTransporter = () => {
     host,
     port,
     secure,
+     family: 4,
     auth: {
       user,
       pass,
