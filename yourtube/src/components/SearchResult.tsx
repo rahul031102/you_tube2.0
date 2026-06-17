@@ -34,7 +34,8 @@ const SearchResultVideoCard = ({ video }: any) => {
         <div className="relative w-80 aspect-video bg-muted rounded-lg overflow-hidden">
           {video?.thumbnail ? (
             <img
-              src={`http://localhost:5000/uploads/${video.thumbnail}`}
+             src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/${video.thumbnail}`}
+            // src={`http://localhost:5000/uploads/${video.thumbnail}`}
               alt={video?.videotitle || "thumbnail"}
               className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
             />

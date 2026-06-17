@@ -249,7 +249,8 @@ const VideoCallPage = ({ params }: any) => {
           const room = roomId || id;
           form.append("roomId", room || id);
           const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-          await fetch((process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000") + "/call/recording", {
+          await fetch((process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000") + "/call/recording", {
+          // await fetch((process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000") + "/call/recording", {
             method: "POST",
             body: form,
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
