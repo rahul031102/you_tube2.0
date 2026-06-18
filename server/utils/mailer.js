@@ -42,40 +42,82 @@
 //   return true;
 // };
 
-import { Resend } from "resend";
 
-let cachedClient;
 
-const getClient = () => {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return null;
-  if (!cachedClient) {
-    cachedClient = new Resend(apiKey);
-  }
-  return cachedClient;
-};
+
+
+
+
+// import { Resend } from "resend";
+
+// let cachedClient;
+
+// const getClient = () => {
+//   const apiKey = process.env.RESEND_API_KEY;
+//   if (!apiKey) return null;
+//   if (!cachedClient) {
+//     cachedClient = new Resend(apiKey);
+//   }
+//   return cachedClient;
+// };
+
+// export const sendMail = async ({ to, subject, html }) => {
+//   const client = getClient();
+//   if (!client) {
+//     console.warn("Email not sent: RESEND_API_KEY not configured.");
+//     return false;
+//   }
+
+//   try {
+//     const { error } = await client.emails.send({
+//       from: process.env.EMAIL_FROM || "YourTube <onboarding@resend.dev>",
+//       to,
+//       subject,
+//       html,
+//     });
+//     if (error) {
+//       console.error("Resend error:", error);
+//       return false;
+//     }
+//     return true;
+//   } catch (err) {
+//     console.error("Resend send failed:", err);
+//     return false;
+//   }
+// };
+
+
 
 export const sendMail = async ({ to, subject, html }) => {
-  const client = getClient();
-  if (!client) {
-    console.warn("Email not sent: RESEND_API_KEY not configured.");
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    console.warn("Email not sent: BREVO_API_KEY not configured.");
     return false;
   }
 
   try {
-    const { error } = await client.emails.send({
-      from: process.env.EMAIL_FROM || "YourTube <onboarding@resend.dev>",
-      to,
-      subject,
-      html,
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": apiKey,
+      },
+      body: JSON.stringify({
+        sender: { name: "YourTube", email: "rahuld031102@gmail.com" },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+      }),
     });
-    if (error) {
-      console.error("Resend error:", error);
+
+    if (!response.ok) {
+      const err = await response.json();
+      console.error("Brevo error:", err);
       return false;
     }
     return true;
   } catch (err) {
-    console.error("Resend send failed:", err);
+    console.error("Brevo send failed:", err);
     return false;
   }
 };
