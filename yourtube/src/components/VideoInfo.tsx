@@ -209,7 +209,7 @@ const VideoInfo = ({ video }: any) => {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{video.videotitle}</h1>
 
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="w-10 h-10">
             <AvatarFallback>{video.videochanel[0]}</AvatarFallback>
@@ -219,7 +219,21 @@ const VideoInfo = ({ video }: any) => {
             <p className="text-sm text-gray-600">1.2M subscribers</p>
           </div>
           <Button className="ml-4">Subscribe</Button>
-        </div>
+        </div> */}
+
+          
+<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div className="flex items-center gap-3 sm:gap-4">
+    <Avatar className="w-10 h-10 shrink-0">
+      <AvatarFallback>{video.videochanel[0]}</AvatarFallback>
+    </Avatar>
+    <div className="min-w-0">
+      <h3 className="font-medium truncate">{video.videochanel}</h3>
+      <p className="text-sm text-gray-600">1.2M subscribers</p>
+    </div>
+    <Button className="ml-2 sm:ml-4 shrink-0">Subscribe</Button>
+  </div>
+
         {/* <div className="flex items-center gap-2"> */}
          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto sm:flex-wrap scrollbar-hide whitespace-nowrap -mx-1 px-1 sm:mx-0 sm:px-0">
           {/* <div className="flex items-center gap-1 sm:gap-2 flex-wrap"> */}

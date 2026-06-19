@@ -1,4 +1,5 @@
-import { Bell, Menu, Mic, Search, User, VideoIcon, PhoneCall } from "lucide-react";
+import { Bell, Menu, Mic, Search, User, VideoIcon, PhoneCall, PhoneOff } from "lucide-react";
+// import { Bell, Menu, Mic, Search, User, VideoIcon, PhoneCall ,phoneoff} from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
@@ -238,34 +239,52 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
     </Button>
   </div>
 )}
-      {incoming && (
-        <div className="fixed right-4 bottom-4 bg-card shadow rounded p-4 w-80 z-50">
-          <div className="font-medium">Incoming call</div>
-          <div className="text-sm text-gray-600">From: {incoming.fromUserId}</div>
-          <div className="mt-3 flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                const socket = getSocket();
-                socket.emit("call-response", { fromUserId: incoming.fromUserId, targetUserId: user?._id, accepted: false, roomId: incoming.roomId });
-                setIncoming(null);
-              }}
-            >
-              Decline
-            </Button>
-            <Button
-              onClick={() => {
-                const socket = getSocket();
-                socket.emit("call-response", { fromUserId: incoming.fromUserId, targetUserId: user?._id, accepted: true, roomId: incoming.roomId });
-                setIncoming(null);
-                router.push(`/call/${incoming.fromUserId}?role=callee&room=${incoming.roomId}&mode=${incoming.mode || "video"}`);
-              }}
-            >
-              Accept
-            </Button>
-          </div>
-        </div>
-      )}
+     {incoming && (
+  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4">
+    <div className="bg-card rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in fade-in zoom-in duration-200">
+      <div className="relative w-24 h-24 mx-auto mb-4">
+        <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
+        <Avatar className="w-24 h-24 relative">
+          <AvatarFallback className="text-2xl">
+            {String(incoming.fromUserId)?.[0]?.toUpperCase() || "U"}
+          </AvatarFallback>
+        </Avatar>
+      </div>
+
+      <p className="text-sm text-muted-foreground mb-1">
+        Incoming {incoming.mode === "audio" ? "audio" : "video"} call
+      </p>
+      <h3 className="text-lg font-semibold mb-6">{incoming.fromUserId}</h3>
+
+      <div className="flex gap-4 justify-center">
+        <Button
+          variant="destructive"
+          size="lg"
+          className="rounded-full w-16 h-16 p-0"
+          onClick={() => {
+            const socket = getSocket();
+            socket.emit("call-response", { fromUserId: incoming.fromUserId, targetUserId: user?._id, accepted: false, roomId: incoming.roomId });
+            setIncoming(null);
+          }}
+        >
+          <PhoneOff className="w-6 h-6" />
+        </Button>
+        <Button
+          size="lg"
+          className="rounded-full w-16 h-16 p-0 bg-green-600 hover:bg-green-700"
+          onClick={() => {
+            const socket = getSocket();
+            socket.emit("call-response", { fromUserId: incoming.fromUserId, targetUserId: user?._id, accepted: true, roomId: incoming.roomId });
+            setIncoming(null);
+            router.push(`/call/${incoming.fromUserId}?role=callee&room=${incoming.roomId}&mode=${incoming.mode || "video"}`);
+          }}
+        >
+          {incoming.mode === "audio" ? <PhoneCall className="w-6 h-6" /> : <VideoIcon className="w-6 h-6" />}
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
       <Channeldialogue
         isopen={isdialogeopen}
         onclose={() => setisdialogeopen(false)}
