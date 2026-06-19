@@ -166,6 +166,16 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
+                {/* // ADD after line 168 (after <DropdownMenuContent className="w-56" align="end" forceMount>): */}
+<div className="sm:hidden">
+  <DropdownMenuItem onClick={() => router.push("/calls?mode=audio")}>
+    <PhoneCall className="w-4 h-4 mr-2" /> Audio Call
+  </DropdownMenuItem>
+  <DropdownMenuItem onClick={() => router.push("/calls?mode=video")}>
+    <VideoIcon className="w-4 h-4 mr-2" /> Video Call
+  </DropdownMenuItem>
+  <DropdownMenuSeparator />
+</div>
                 {user?.channelname ? (
                   <DropdownMenuItem asChild>
                     <Link href={`/channel/${user?._id}`}>Your channel</Link>

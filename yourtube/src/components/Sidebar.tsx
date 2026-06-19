@@ -144,13 +144,22 @@ const Sidebar = ({ open = false, onClose }: SidebarProps) => {
         />
       )}
 
-      <aside
+      {/* <aside
         className={`
           fixed md:static top-0 left-0 z-50
           w-64 bg-background text-foreground border-r min-h-screen p-2
           transform transition-transform duration-200 ease-in-out
           ${open ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0
+        `}
+      > */}
+       <aside
+        className={`
+          fixed md:static top-0 left-0 z-50
+          w-64 bg-background text-foreground border-r min-h-screen p-2
+          transform transition-transform duration-200 ease-in-out
+          ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          md:block
         `}
       >
         <div className="flex items-center justify-between mb-2 md:hidden px-2 py-1">
