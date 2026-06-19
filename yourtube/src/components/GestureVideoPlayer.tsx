@@ -311,7 +311,8 @@ export default function GestureVideoPlayer({
   return (
     <div className="space-y-4">
       {/* Video Player Container */}
-      <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-lg">
+      <div className="relative w-full rounded-none sm:rounded-lg overflow-hidden bg-black">
+      {/* <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-lg"> */}
         {/* Native Video Element */}
         <video
           key={video?._id}

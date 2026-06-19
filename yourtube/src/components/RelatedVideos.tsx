@@ -15,7 +15,8 @@ interface RelatedVideosProps {
 const vid = "/video/vdo.mp4";
 export default function RelatedVideos({ videos }: RelatedVideosProps) {
   return (
-    <div className="space-y-2">
+    // <div className="space-y-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 px-2 sm:px-0">
       {videos.map((video) => (
         <Link
           key={video._id}

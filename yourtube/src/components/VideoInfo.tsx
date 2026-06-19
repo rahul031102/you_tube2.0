@@ -220,7 +220,8 @@ const VideoInfo = ({ video }: any) => {
           </div>
           <Button className="ml-4">Subscribe</Button>
         </div>
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2"> */}
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
           <div className="flex items-center bg-muted rounded-full">
             <Button
               variant="ghost"
