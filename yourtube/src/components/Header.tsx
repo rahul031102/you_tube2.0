@@ -16,16 +16,26 @@ import { useRouter } from "next/router";
 import { useUser } from "@/lib/AuthContext";
 import { getSocket } from "@/lib/socket";
 
-const Header = () => {
+// const Header = () => {
+//   const { user, logout, handlegooglesignin } = useUser();
+//   // const user: any = {
+//   //   id: "1",
+//   //   name: "John Doe",
+//   //   email: "john@example.com",
+//   //   image: "https://github.com/shadcn.png?height=32&width=32",
+//   // };
+//   const [searchQuery, setSearchQuery] = useState("");
+ 
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+const Header = ({ onMenuClick }: HeaderProps) => {
   const { user, logout, handlegooglesignin } = useUser();
-  // const user: any = {
-  //   id: "1",
-  //   name: "John Doe",
-  //   email: "john@example.com",
-  //   image: "https://github.com/shadcn.png?height=32&width=32",
-  // };
   const [searchQuery, setSearchQuery] = useState("");
-  const [isdialogeopen, setisdialogeopen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
+const [isdialogeopen, setisdialogeopen] = useState(false);
   const router = useRouter();
   const [incoming, setIncoming] = useState<any>(null);
 
@@ -69,9 +79,14 @@ const Header = () => {
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-background text-foreground border-b">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon">
+        {/* <Button variant="ghost" size="icon">
           <Menu className="w-6 h-6" />
-        </Button>
+        </Button> */}
+
+        <Button variant="ghost" size="icon" onClick={onMenuClick}>
+  <Menu className="w-6 h-6" />
+</Button>
+
         <Link href="/" className="flex items-center gap-1">
           <div className="bg-red-600 p-1 rounded">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
@@ -84,7 +99,8 @@ const Header = () => {
       </div>
       <form
         onSubmit={handleSearch}
-        className="flex items-center gap-2 flex-1 max-w-2xl mx-4"
+        className="hidden sm:flex items-center gap-2 flex-1 max-w-2xl mx-4"
+        // className="flex items-center gap-2 flex-1 max-w-2xl mx-4"
       >
         <div className="flex flex-1">
           <Input
@@ -106,15 +122,34 @@ const Header = () => {
           <Mic className="w-5 h-5" />
         </Button>
       </form>
+
+// ADD right after 
+<Button
+  variant="ghost"
+  size="icon"
+  className="sm:hidden"
+  onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+>
+  <Search className="w-5 h-5" />
+</Button>      
+
       <div className="flex items-center gap-2">
         {user ? (
           <>
-            <Button variant="ghost" size="icon" onClick={() => router.push("/calls?mode=audio") }>
+            {/* <Button variant="ghost" size="icon" onClick={() => router.push("/calls?mode=audio") }>
               <PhoneCall className="w-6 h-6" />
             </Button>
             <Button variant="ghost" size="icon" onClick={() => router.push("/calls?mode=video") }>
               <VideoIcon className="w-6 h-6" />
-            </Button>
+            </Button> */}
+
+              <Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => router.push("/calls?mode=audio") }>
+  <PhoneCall className="w-6 h-6" />
+</Button>
+<Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => router.push("/calls?mode=video") }>
+  <VideoIcon className="w-6 h-6" />
+</Button>
+
             <Button variant="ghost" size="icon">
               <Bell className="w-6 h-6" />
             </Button>
@@ -176,6 +211,23 @@ const Header = () => {
           </>
         )}{" "}
       </div>
+
+      {mobileSearchOpen && (
+  <div className="sm:hidden px-4 pb-2 flex items-center gap-2">
+    <Input
+      type="search"
+      placeholder="Search"
+      value={searchQuery}
+      onKeyPress={handleKeypress}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="flex-1"
+      autoFocus
+    />
+    <Button onClick={handleSearch} size="icon">
+      <Search className="w-5 h-5" />
+    </Button>
+  </div>
+)}
       {incoming && (
         <div className="fixed right-4 bottom-4 bg-card shadow rounded p-4 w-80 z-50">
           <div className="font-medium">Incoming call</div>

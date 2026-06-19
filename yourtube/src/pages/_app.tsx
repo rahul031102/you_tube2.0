@@ -1,23 +1,53 @@
+// import Header from "@/components/Header";
+// import Sidebar from "@/components/Sidebar";
+// import OtpDialog from "@/components/OtpDialog";
+// import { Toaster } from "@/components/ui/sonner";
+// import "@/styles/globals.css";
+// import type { AppProps } from "next/app";
+// import { UserProvider } from "../lib/AuthContext";
+// import { useDynamicTheme } from "../lib/useDynamicTheme";
+
+// export default function App({ Component, pageProps }: AppProps) {
+//   useDynamicTheme();
+//   return (
+//     <UserProvider>
+//       <div className="min-h-screen bg-background text-foreground">
+//         <title>Your-Tube Clone</title>
+//         <Header />
+//         <Toaster />
+//         <OtpDialog />
+//         <div className="flex">
+//           <Sidebar />
+//           <Component {...pageProps} />
+//         </div>
+//       </div>
+//     </UserProvider>
+//   );
+// }
+
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import OtpDialog from "@/components/OtpDialog";
 import { Toaster } from "@/components/ui/sonner";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
+import { useState } from "react";
 import { UserProvider } from "../lib/AuthContext";
 import { useDynamicTheme } from "../lib/useDynamicTheme";
 
 export default function App({ Component, pageProps }: AppProps) {
   useDynamicTheme();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <UserProvider>
       <div className="min-h-screen bg-background text-foreground">
         <title>Your-Tube Clone</title>
-        <Header />
+        <Header onMenuClick={() => setMobileMenuOpen(true)} />
         <Toaster />
         <OtpDialog />
         <div className="flex">
-          <Sidebar />
+          <Sidebar open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
           <Component {...pageProps} />
         </div>
       </div>
