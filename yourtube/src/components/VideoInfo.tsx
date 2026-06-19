@@ -221,7 +221,8 @@ const VideoInfo = ({ video }: any) => {
           <Button className="ml-4">Subscribe</Button>
         </div>
         {/* <div className="flex items-center gap-2"> */}
-          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+         <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto sm:flex-wrap scrollbar-hide whitespace-nowrap -mx-1 px-1 sm:mx-0 sm:px-0">
+          {/* <div className="flex items-center gap-1 sm:gap-2 flex-wrap"> */}
           <div className="flex items-center bg-muted rounded-full">
             <Button
               variant="ghost"
@@ -254,7 +255,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className={`bg-muted rounded-full ${
+            className={`bg-muted rounded-full shrink-0 ${
               isWatchLater ? "text-primary" : ""
             }`}
             onClick={handleWatchLater}
@@ -265,7 +266,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className="bg-muted rounded-full"
+            className="bg-muted rounded-full shrink-0"
           >
             <Share className="w-5 h-5 mr-2" />
             Share
@@ -273,7 +274,7 @@ const VideoInfo = ({ video }: any) => {
           <Button
             variant="ghost"
             size="sm"
-            className="bg-muted rounded-full"
+            className="bg-muted rounded-full shrink-0"
             onClick={handleDownloadVideo}
             disabled={downloadLoading}
           >
@@ -285,7 +286,7 @@ const VideoInfo = ({ video }: any) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="bg-muted rounded-full"
+                className="bg-muted rounded-full shrink-0"
               >
                 <MoreHorizontal className="w-5 h-5" />
               </Button>

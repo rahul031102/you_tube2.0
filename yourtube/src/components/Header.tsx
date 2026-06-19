@@ -143,11 +143,11 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
               <VideoIcon className="w-6 h-6" />
             </Button> */}
 
-              <Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => router.push("/calls?mode=audio") }>
-  <PhoneCall className="w-6 h-6" />
+            <Button variant="ghost" size="icon" onClick={() => router.push("/calls?mode=audio") }>
+  <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6" />
 </Button>
-<Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => router.push("/calls?mode=video") }>
-  <VideoIcon className="w-6 h-6" />
+<Button variant="ghost" size="icon" onClick={() => router.push("/calls?mode=video") }>
+  <VideoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
 </Button>
 
             <Button variant="ghost" size="icon">
@@ -167,7 +167,7 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 {/* // ADD after line 168 (after <DropdownMenuContent className="w-56" align="end" forceMount>): */}
-<div className="sm:hidden">
+{/* <div className="sm:hidden">
   <DropdownMenuItem onClick={() => router.push("/calls?mode=audio")}>
     <PhoneCall className="w-4 h-4 mr-2" /> Audio Call
   </DropdownMenuItem>
@@ -175,7 +175,7 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
     <VideoIcon className="w-4 h-4 mr-2" /> Video Call
   </DropdownMenuItem>
   <DropdownMenuSeparator />
-</div>
+</div> */}
                 {user?.channelname ? (
                   <DropdownMenuItem asChild>
                     <Link href={`/channel/${user?._id}`}>Your channel</Link>
