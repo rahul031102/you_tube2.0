@@ -1,6 +1,7 @@
 import { Bell, Menu, Mic, Search, User, VideoIcon, PhoneCall, PhoneOff } from "lucide-react";
 // import { Bell, Menu, Mic, Search, User, VideoIcon, PhoneCall ,phoneoff} from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { Input } from "./ui/input";
@@ -39,7 +40,8 @@ const Header = ({ onMenuClick }: HeaderProps) => {
 const [isdialogeopen, setisdialogeopen] = useState(false);
   const router = useRouter();
   const [incoming, setIncoming] = useState<any>(null);
-
+  const ringIntervalRef = useRef<number | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   useEffect(() => {
     const socket = getSocket();
     if (user?. _id) {
@@ -52,9 +54,12 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
       }
     };
     socket.on("connect", onConnect);
-    const onIncoming = ({ fromUserId, roomId, mode }: any) => {
-      setIncoming({ fromUserId, roomId, mode });
-    };
+    // const onIncoming = ({ fromUserId, roomId, mode }: any) => {
+    //   setIncoming({ fromUserId, roomId, mode });
+    // };
+    const onIncoming = ({ fromUserId, roomId, mode, fromName, fromImage }: any) => {
+  setIncoming({ fromUserId, roomId, mode, fromName, fromImage });
+};
     socket.on("incoming-call", onIncoming);
     const onRegisterFailed = ({ reason }: any) => {
       console.warn("socket register failed", reason);
@@ -73,6 +78,42 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
       socket.off("register-success", onRegisterSuccess);
     };
   }, [user]);
+
+useEffect(() => {
+  const playBeep = () => {
+    try {
+      const ctx = audioCtxRef.current || new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioCtxRef.current = ctx;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = 800;
+      osc.type = "sine";
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {}
+  };
+
+  if (incoming) {
+    playBeep();
+    ringIntervalRef.current = window.setInterval(playBeep, 1000);
+  } else if (ringIntervalRef.current) {
+    clearInterval(ringIntervalRef.current);
+    ringIntervalRef.current = null;
+  }
+
+  return () => {
+    if (ringIntervalRef.current) {
+      clearInterval(ringIntervalRef.current);
+      ringIntervalRef.current = null;
+    }
+  };
+}, [incoming]);  
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -252,8 +293,10 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
       <div className="relative w-24 h-24 mx-auto mb-4">
         <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
         <Avatar className="w-24 h-24 relative">
-          <AvatarFallback className="text-2xl">
-            {String(incoming.fromUserId)?.[0]?.toUpperCase() || "U"}
+          <AvatarImage src={incoming.fromImage} />
+           <AvatarFallback className="text-2xl">
+              {String(incoming.fromName || incoming.fromUserId)?.[0]?.toUpperCase() || "U"}
+            {/* {String(incoming.fromUserId)?.[0]?.toUpperCase() || "U"} */}
           </AvatarFallback>
         </Avatar>
       </div>
@@ -261,7 +304,8 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
       <p className="text-sm text-muted-foreground mb-1">
         Incoming {incoming.mode === "audio" ? "audio" : "video"} call
       </p>
-      <h3 className="text-lg font-semibold mb-6">{incoming.fromUserId}</h3>
+      <h3 className="text-lg font-semibold mb-6">{incoming.fromName || incoming.fromUserId}</h3>
+      {/* <h3 className="text-lg font-semibold mb-6">{incoming.fromUserId}</h3> */}
 
       <div className="flex gap-4 justify-center">
         <Button
@@ -302,3 +346,4 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
 };
 
 export default Header;
+  

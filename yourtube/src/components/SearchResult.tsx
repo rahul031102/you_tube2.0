@@ -31,9 +31,11 @@ const SearchResultVideoCard = ({ video }: any) => {
   }, []);
 
   return (
-    <div className="flex gap-4 group">
+    // <div className="flex gap-4 group">
+      <div className="flex flex-col sm:flex-row gap-4 group">
       <Link href={`/watch/${video._id}`} className="flex-shrink-0">
-        <div className="relative w-80 aspect-video bg-muted rounded-lg overflow-hidden">
+       <div className="relative w-full sm:w-80 aspect-video bg-muted rounded-lg overflow-hidden">
+        {/* <div className="relative w-80 aspect-video bg-muted rounded-lg overflow-hidden"> */}
           {video?.thumbnail ? (
             <img
             src={video.thumbnail}
@@ -75,7 +77,7 @@ const SearchResultVideoCard = ({ video }: any) => {
           href={`/channel/${video.uploader}`}
           className="flex items-center gap-2 mb-2 hover:text-blue-600"
         >
-          <Avatar className="w-6h-6">
+          <Avatar className="w-6 h-6">
             <AvatarImage src="/placeholder.svg?height=24&width=24" />
             <AvatarFallback className="text-xs">
               {video.videochanel[0]}

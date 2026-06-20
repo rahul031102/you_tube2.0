@@ -51,7 +51,8 @@ export default function FriendsList({ mode = "video" }: FriendsListProps) {
     const socket = getSocket();
     const roomId = createRoomId(targetId);
     setCalling(targetId);
-    socket.emit("call-request", { targetUserId: String(targetId), roomId, fromUserId: user._id, mode: selectedMode });
+    socket.emit("call-request", { targetUserId: String(targetId), roomId, fromUserId: user._id, mode: selectedMode, fromName: user.channelname || user.name, fromImage: user.image });
+    // socket.emit("call-request", { targetUserId: String(targetId), roomId, fromUserId: user._id, mode: selectedMode });
     router.push(`/call/${targetId}?role=caller&room=${roomId}&mode=${selectedMode}`);
   };
 
