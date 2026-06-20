@@ -50,7 +50,7 @@ export default function VideoCard({ video }: any) {
 <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
   {video?.thumbnail ? (
     <img
-    src={video?.filepath}
+    src={video?.thumbnail}
     // src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/${video.thumbnail}`}
     // src={`http://localhost:5000/uploads/${video.thumbnail}`}
       alt={video?.videotitle || "thumbnail"}
