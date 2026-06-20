@@ -45,7 +45,13 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
     if (user?. _id) {
       socket.emit("register", { userId: user._id });
     }
-
+  
+    const onConnect = () => {
+      if (user?._id) {
+        socket.emit("register", { userId: user._id });
+      }
+    };
+    socket.on("connect", onConnect);
     const onIncoming = ({ fromUserId, roomId, mode }: any) => {
       setIncoming({ fromUserId, roomId, mode });
     };
@@ -61,6 +67,7 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
     socket.on("register-success", onRegisterSuccess);
 
     return () => {
+      socket.off("connect", onConnect);
       socket.off("incoming-call", onIncoming);
       socket.off("register-failed", onRegisterFailed);
       socket.off("register-success", onRegisterSuccess);
