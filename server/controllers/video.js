@@ -99,7 +99,8 @@ export const uploadvideo = async (req, res) => {
       videochanel: req.body.videochanel,
       uploader: req.body.uploader,
       cloudinary_id: result.public_id,     // needed for delete
-      thumbnail: result.secure_url.replace("/upload/", "/upload/so_1/"),
+      thumbnail: result.secure_url.replace("/upload/", "/upload/so_1/").replace(/\.[^/.]+$/, ".jpg"),
+      // thumbnail: result.secure_url.replace("/upload/", "/upload/so_1/"),
     });
 
     await file.save();
