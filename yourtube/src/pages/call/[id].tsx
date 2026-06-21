@@ -242,23 +242,32 @@ const VideoCallPage = ({ params }: any) => {
     };
     recorder.onstop = () => {
       const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-      (async () => {
-        try {
-          const form = new FormData();
-          form.append("recording", blob, `call-${Date.now()}.webm`);
-          const room = roomId || id;
-          form.append("roomId", room || id);
-          const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-          await fetch((process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000") + "/call/recording", {
-          // await fetch((process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000") + "/call/recording", {
-            method: "POST",
-            body: form,
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          });
-        } catch (e) {
-          console.warn("Upload failed", e);
-        }
-      })();
+      // REPLACE WITH:
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `call-recording-${Date.now()}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      // (async () => {
+      //   try {
+      //     const form = new FormData();
+      //     form.append("recording", blob, `call-${Date.now()}.webm`);
+      //     const room = roomId || id;
+      //     form.append("roomId", room || id);
+      //     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      //     await fetch((process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000") + "/call/recording", {
+      //     // await fetch((process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000") + "/call/recording", {
+      //       method: "POST",
+      //       body: form,
+      //       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      //     });
+      //   } catch (e) {
+      //     console.warn("Upload failed", e);
+      //   }
+      // })();
       setRecording(false);
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
