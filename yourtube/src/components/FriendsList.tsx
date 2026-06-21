@@ -100,7 +100,7 @@ export default function FriendsList({ mode = "video" }: FriendsListProps) {
                 <VideoIcon className="w-4 h-4" />
               </Button>
             </div> */}
-            // TO:
+            
 <div className="flex items-center gap-2">
   <Button
     variant="default"
