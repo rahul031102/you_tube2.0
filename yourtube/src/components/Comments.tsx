@@ -367,6 +367,7 @@ const Comments = ({ videoId }: any) => {
                         >
                           <option value="en">English</option>
                           <option value="hi">Hindi</option>
+                          <option value="te">Telugu</option>
                           <option value="es">Spanish</option>
                           <option value="fr">French</option>
                           <option value="de">German</option>
