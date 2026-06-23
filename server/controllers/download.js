@@ -69,7 +69,8 @@ export const getDownloads = async (req, res) => {
       .find({ viewer: userId })
       .sort({ createdAt: -1 })
       .populate({ path: "videoid", model: "videofiles" });
-
+       const filtered = downloads.filter((item) => item.videoid !== null);
+return res.status(200).json(filtered);
     return res.status(200).json(downloads);
   } catch (error) {
     console.error("Get downloads error:", error);
