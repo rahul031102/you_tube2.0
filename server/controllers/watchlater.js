@@ -31,7 +31,9 @@ export const getallwatchlater = async (req, res) => {
         model: "videofiles",
       })
       .exec();
-    return res.status(200).json(watchlatervideo);
+    const filtered = watchlatervideo.filter((item) => item.videoid !== null);
+return res.status(200).json(filtered);
+      // return res.status(200).json(watchlatervideo);
   } catch (error) {
     console.error(" error:", error);
     return res.status(500).json({ message: "Something went wrong" });

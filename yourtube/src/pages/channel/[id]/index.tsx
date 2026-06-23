@@ -14,7 +14,7 @@ const index = () => {
 
   React.useEffect(() => {
     if (!id) return;
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/video/all`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/video/getall`)
       .then((res) => res.json())
       .then((data) => {
         const channelVideos = data.filter((v: any) => v.uploader === id);
