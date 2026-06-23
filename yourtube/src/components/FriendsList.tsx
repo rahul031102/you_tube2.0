@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { PhoneCall, VideoIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import axiosInstance from "@/lib/axiosinstance";
 import { getSocket } from "@/lib/socket";
 import { useUser } from "@/lib/AuthContext";
@@ -21,11 +21,13 @@ export default function FriendsList({ mode = "video" }: FriendsListProps) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!user?._id) return;
     let mounted = true;
     async function load() {
       setLoading(true);
       try {
-        const res = await axiosInstance.get("/user/list");
+        // excludeId hides yourself from the list
+        const res = await axiosInstance.get(`/user/list?excludeId=${user?._id}`);
         if (!mounted) return;
         setUsersList(res.data || []);
       } catch (e) {
@@ -36,14 +38,13 @@ export default function FriendsList({ mode = "video" }: FriendsListProps) {
       }
     }
     load();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    return () => { mounted = false; };
+  }, [user?._id]);
 
-  const createRoomId = (targetId: string) => `${user?._id || "anon"}-${targetId}-${Date.now()}`;
+  const createRoomId = (targetId: string) =>
+    `${user?._id || "anon"}-${targetId}-${Date.now()}`;
 
-  const handleCall = (targetId: string, selectedMode: "audio" | "video") => {
+  const handleCall = (targetId: string, targetName: string, selectedMode: "audio" | "video") => {
     if (!user?._id) {
       router.push("/");
       return;
@@ -51,67 +52,79 @@ export default function FriendsList({ mode = "video" }: FriendsListProps) {
     const socket = getSocket();
     const roomId = createRoomId(targetId);
     setCalling(targetId);
-    socket.emit("call-request", { targetUserId: String(targetId), roomId, fromUserId: user._id, mode: selectedMode, fromName: user.channelname || user.name, fromImage: user.image });
-    // socket.emit("call-request", { targetUserId: String(targetId), roomId, fromUserId: user._id, mode: selectedMode });
-    router.push(`/call/${targetId}?role=caller&room=${roomId}&mode=${selectedMode}`);
+    socket.emit("call-request", {
+      targetUserId: String(targetId),
+      roomId,
+      fromUserId: user._id,
+      mode: selectedMode,
+      fromName: user.channelname || user.name,
+      fromImage: user.image,
+    });
+    const toName = encodeURIComponent(targetName);
+    router.push(`/call/${targetId}?role=caller&room=${roomId}&mode=${selectedMode}&toName=${toName}`);
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Friends</h2>
-          <p className="text-sm text-gray-500">Current mode: {mode === "audio" ? "Audio Call" : "Video Call"}</p>
+          <h2 className="text-lg font-semibold">
+            {mode === "audio" ? "Audio Call" : "Video Call"}
+          </h2>
+          <p className="text-sm text-gray-500">Select a user to call</p>
         </div>
-        <p className="text-sm text-gray-500">Tap an icon to start a call</p>
       </div>
 
       <div className="space-y-3">
         {loading && <div className="text-sm text-gray-500">Loading users...</div>}
         {!loading && usersList && usersList.length === 0 && (
-          <div className="text-sm text-gray-500">No users available</div>
+          <div className="text-sm text-gray-500">No other users available</div>
         )}
 
-        {!loading && usersList && usersList.map((f) => (
-          <div key={f._id} className="flex items-center justify-between gap-4 p-3 rounded-lg border">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-12 h-12">
-                <AvatarImage src={f.image || undefined} />
-                <AvatarFallback>{(f.name || "")[0] || "U"}</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-medium">{f.channelname || f.name}</div>
-                <div className="text-sm text-gray-500">{f.online ? "Online" : "Offline"}</div>
+        {!loading && usersList && usersList.map((f) => {
+          const displayName = f.channelname || f.name || "Unknown";
+          const isCalling = calling === f._id;
+          return (
+            <div
+              key={f._id}
+              className="flex items-center justify-between gap-4 p-3 rounded-lg border"
+            >
+              <div className="flex items-center gap-3">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage src={f.image || undefined} />
+                  <AvatarFallback>{displayName[0]?.toUpperCase() || "U"}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-medium">{displayName}</div>
+                  <div className={`text-sm ${f.online ? "text-green-500" : "text-gray-400"}`}>
+                    {f.online ? "● Online" : "○ Offline"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={isCalling}
+                  onClick={() => handleCall(String(f._id), displayName, "audio")}
+                  title="Audio call"
+                >
+                  <PhoneCall className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="default"
+                  size="icon"
+                  disabled={isCalling}
+                  onClick={() => handleCall(String(f._id), displayName, "video")}
+                  title="Video call"
+                >
+                  <VideoIcon className="w-4 h-4" />
+                </Button>
               </div>
             </div>
-            {/* <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleCall(String(f._id), "audio")}
-              >
-                <PhoneCall className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleCall(String(f._id), "video")}
-              >
-                <VideoIcon className="w-4 h-4" />
-              </Button>
-            </div> */}
-            
-<div className="flex items-center gap-2">
-  <Button
-    variant="default"
-    size="icon"
-    onClick={() => handleCall(String(f._id), mode)}
-  >
-    {mode === "audio" ? <PhoneCall className="w-4 h-4" /> : <VideoIcon className="w-4 h-4" />}
-  </Button>
-</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
