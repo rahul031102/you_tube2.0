@@ -344,11 +344,20 @@ const toggleScreenShare = async () => {
       const sender = pc.getSenders().find((s) => s.track?.kind === "video");
       if (sender) {
         await sender.replaceTrack(screenTrack);
-        if (localRef.current) localRef.current.srcObject = displayStream;
+        if (localRef.current) {
+  localRef.current.srcObject = displayStream;
+  localRef.current.muted = true;
+  localRef.current.play().catch(() => {});
+}
+        // if (localRef.current) localRef.current.srcObject = displayStream;
         screenTrack.onended = async () => {
           const camera = cameraTrackRef.current;
           if (camera && sender) await sender.replaceTrack(camera);
-          if (localRef.current && localStreamRef.current) localRef.current.srcObject = localStreamRef.current;
+          if (localRef.current && localStreamRef.current) {
+  localRef.current.srcObject = localStreamRef.current;
+  localRef.current.play().catch(() => {});
+}
+          // if (localRef.current && localStreamRef.current) localRef.current.srcObject = localStreamRef.current;
           screenTrackRef.current = null;
           setIsScreenSharing(false);
         };
@@ -367,7 +376,11 @@ const toggleScreenShare = async () => {
     const sender = pc.getSenders().find((s) => s.track?.kind === "video");
     const camera = cameraTrackRef.current;
     if (sender && camera) await sender.replaceTrack(camera);
-    if (localRef.current && localStreamRef.current) localRef.current.srcObject = localStreamRef.current;
+    if (localRef.current && localStreamRef.current) {
+  localRef.current.srcObject = localStreamRef.current;
+  localRef.current.play().catch(() => {});
+}
+    // if (localRef.current && localStreamRef.current) localRef.current.srcObject = localStreamRef.current;
     if (screenTrackRef.current) screenTrackRef.current.stop();
     screenTrackRef.current = null;
     setIsScreenSharing(false);

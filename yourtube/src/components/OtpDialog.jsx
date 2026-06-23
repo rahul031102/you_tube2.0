@@ -77,10 +77,14 @@ export default function OtpDialog() {
           {pendingAuth.requiresPhone && (
             <div className="space-y-2 mb-4">
               <p className="text-sm text-muted-foreground">No phone number found on your account. Save one to receive SMS OTPs.</p>
-              <div className="flex gap-2">
+              {/* <div className="flex gap-2">
                 <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91XXXXXXXXXX" />
                 <Button onClick={onSavePhone} disabled={savingPhone}>{savingPhone ? "Saving..." : "Save"}</Button>
-              </div>
+              </div> */}
+              <div className="flex flex-col sm:flex-row gap-2">
+  <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91XXXXXXXXXX" />
+  <Button onClick={onSavePhone} disabled={savingPhone} className="sm:w-auto">{savingPhone ? "Saving..." : "Save"}</Button>
+</div>
             </div>
           )}
 
@@ -89,7 +93,7 @@ export default function OtpDialog() {
             {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
         </div>
-
+{/* 
         <DialogFooter>
           <div className="flex items-center gap-2 w-full">
             <Button variant="outline" onClick={() => onResend(false)} disabled={resending}>{resending ? "Resending..." : "Resend"}</Button>
@@ -101,7 +105,21 @@ export default function OtpDialog() {
               <Button onClick={onVerify} disabled={loading}>{loading ? "Verifying..." : "Verify"}</Button>
             </div>
           </div>
-        </DialogFooter>
+        </DialogFooter> */}
+        <DialogFooter>
+  <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
+    <div className="flex flex-wrap gap-2">
+      <Button variant="outline" size="sm" onClick={() => onResend(false)} disabled={resending}>{resending ? "Resending..." : "Resend"}</Button>
+      <Button variant="ghost" size="sm" onClick={() => onResend(true)} disabled={resending}>Send to email</Button>
+    </div>
+    <div className="flex gap-2 sm:ml-auto">
+      <Button variant="outline" className="flex-1 sm:flex-initial" onClick={() => { cancelOtp(); }}>
+        Cancel
+      </Button>
+      <Button className="flex-1 sm:flex-initial" onClick={onVerify} disabled={loading}>{loading ? "Verifying..." : "Verify"}</Button>
+    </div>
+  </div>
+</DialogFooter>
       </DialogContent>
     </Dialog>
   );

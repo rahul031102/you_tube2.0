@@ -43,6 +43,32 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
   const ringIntervalRef = useRef<number | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   useEffect(() => {
+  if (typeof Notification !== "undefined" && Notification.permission === "default") {
+    Notification.requestPermission();
+  }
+}, []);
+  useEffect(() => {
+  const unlockAudio = () => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    if (audioCtxRef.current.state === "suspended") {
+      audioCtxRef.current.resume();
+    }
+    window.removeEventListener("click", unlockAudio);
+    window.removeEventListener("touchstart", unlockAudio);
+    window.removeEventListener("keydown", unlockAudio);
+  };
+  window.addEventListener("click", unlockAudio);
+  window.addEventListener("touchstart", unlockAudio);
+  window.addEventListener("keydown", unlockAudio);
+  return () => {
+    window.removeEventListener("click", unlockAudio);
+    window.removeEventListener("touchstart", unlockAudio);
+    window.removeEventListener("keydown", unlockAudio);
+  };
+}, []);
+  useEffect(() => {
     const socket = getSocket();
     if (user?. _id) {
       socket.emit("register", { userId: user._id });
@@ -98,11 +124,21 @@ useEffect(() => {
     } catch (e) {}
   };
 
-  if (incoming) {
+  // if (incoming) {
+  //   playBeep();
+  //   ringIntervalRef.current = window.setInterval(playBeep, 1000);
+  // } else if (ringIntervalRef.current) {
+    if (incoming) {
     playBeep();
     ringIntervalRef.current = window.setInterval(playBeep, 1000);
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+      new Notification("Incoming call", {
+        body: `${incoming.fromName || "Someone"} is calling you`,
+        icon: "/favicon.ico",
+      });
+    }
   } else if (ringIntervalRef.current) {
-    clearInterval(ringIntervalRef.current);
+  clearInterval(ringIntervalRef.current);
     ringIntervalRef.current = null;
   }
 
