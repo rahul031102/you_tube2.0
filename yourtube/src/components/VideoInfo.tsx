@@ -149,10 +149,17 @@ const VideoInfo = ({ video }: any) => {
         userId: user?._id,
       });
 
+      // const downloadPath = res.data.downloadPath?.replace(/\\/g, "/");
+      // if (downloadPath) {
+      //   const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/${downloadPath}`;
       const downloadPath = res.data.downloadPath?.replace(/\\/g, "/");
-      if (downloadPath) {
-        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/${downloadPath}`;
-        const link = document.createElement("a");
+if (downloadPath) {
+  // Cloudinary returns a full URL already; only prepend our backend URL
+  // for legacy local-disk paths that don't start with http(s).
+  const url = /^https?:\/\//i.test(downloadPath)
+    ? downloadPath
+    : `${process.env.NEXT_PUBLIC_BACKEND_URL}/${downloadPath}`;  
+      const link = document.createElement("a");
         link.href = url;
         link.download = video.filename || `${video.videotitle}.mp4`;
         document.body.appendChild(link);

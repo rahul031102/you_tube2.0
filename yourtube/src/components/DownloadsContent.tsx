@@ -62,7 +62,8 @@ export default function DownloadsContent() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-600">{downloads.length} videos</p>
+        {/* <p className="text-sm text-gray-600">{downloads.length} videos</p> */}
+        <p className="text-sm text-gray-600">{downloads.filter((item) => item.videoid).length} videos</p>
       </div>
       <div className="space-y-4">
         {downloads.filter((item) =>  item.videoid).map((item)=>(
