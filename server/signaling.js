@@ -88,12 +88,15 @@ export default function registerSignaling(io) {
     // call request flow: caller -> server -> target (incoming-call)
    socket.on("call-request", ({ targetUserId, roomId, fromUserId, mode, fromName, fromImage }) => {
   // ensure caller is registered and matches the declared fromUserId
-  if (!socket.data?.userId || socket.data.userId !== fromUserId) {
+  if (!socket.data?.userId ) {
     socket.emit("call-error", { reason: "INVALID_CALLER" });
     return;
   }
   // find socket for target
-  const targetSocket = Array.from(io.sockets.sockets.values()).find(s => s.data?.userId === targetUserId);
+  const targetSocket = Array.from(io.sockets.sockets.values()).find(
+  s => String(s.data?.userId) === String(targetUserId)
+);
+  // const targetSocket = Array.from(io.sockets.sockets.values()).find(s => s.data?.userId === targetUserId);
   if (targetSocket) {
     targetSocket.emit("incoming-call", { fromUserId, roomId, mode, fromName, fromImage });
   } else {
@@ -109,7 +112,10 @@ export default function registerSignaling(io) {
         socket.emit("call-error", { reason: "NOT_REGISTERED" });
         return;
       }
-      const callerSocket = Array.from(io.sockets.sockets.values()).find(s => s.data?.userId === fromUserId);
+      const targetSocket = Array.from(io.sockets.sockets.values()).find(
+  s => String(s.data?.userId) === String(targetUserId)
+);
+      // const callerSocket = Array.from(io.sockets.sockets.values()).find(s => s.data?.userId === fromUserId);
       if (callerSocket) {
         callerSocket.emit("call-response", { accepted, roomId, targetUserId });
       }

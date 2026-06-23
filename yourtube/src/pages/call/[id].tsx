@@ -184,11 +184,21 @@ const VideoCallPage = () => {
       }
     };
 
-    if (role === "caller") {
-      socket.on("call-response", onResponse);
-    } else {
-      setupPeerAndMedia();
+   if (role === "caller") {
+  // start local camera immediately so caller sees themselves while waiting
+  navigator.mediaDevices.getUserMedia(mediaConstraints).then((stream) => {
+    localStreamRef.current = stream;
+    cameraTrackRef.current = stream.getVideoTracks()[0] || null;
+    if (localRef.current && currentMode === "video") {
+      localRef.current.srcObject = stream;
+      localRef.current.muted = true;
+      localRef.current.play().catch(() => {});
     }
+  }).catch(() => {});
+  socket.on("call-response", onResponse);
+} else {
+  setupPeerAndMedia();
+}
 
     return () => {
       mounted = false;
@@ -357,7 +367,7 @@ const VideoCallPage = () => {
         </div>
 
         {/* Waiting screen */}
-       // TO:
+       
 {!connected && role === "caller" && (
   <div className="bg-gray-900 rounded-lg p-8 text-center text-white space-y-4">
     <div className="text-2xl font-semibold">Calling {calleeName}...</div>
