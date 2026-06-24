@@ -236,10 +236,10 @@ useEffect(() => {
               <VideoIcon className="w-6 h-6" />
             </Button> */}
 
-            <Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => router.push("/calls?mode=audio") }>
+            <Button variant="ghost" size="icon" onClick={() => router.push("/calls?mode=audio") }>
   <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6" />
 </Button>
-<Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => router.push("/calls?mode=video") }>
+<Button variant="ghost" size="icon" onClick={() => router.push("/calls?mode=video") }>
   <VideoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
 </Button>
 
