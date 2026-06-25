@@ -265,15 +265,11 @@ useEffect(() => {
               <VideoIcon className="w-6 h-6" />
             </Button> */}
 
-            <Button variant="ghost" size="icon" onClick={() => router.push("/calls?mode=audio") }>
-  <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6" />
-</Button>
-<Button variant="ghost" size="icon" onClick={() => router.push("/calls?mode=video") }>
-  <VideoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-</Button>
-
-            <Button variant="ghost" size="icon">
-              <Bell className="w-6 h-6" />
+            <Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => router.push("/calls?mode=audio") }>
+              <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6" />
+            </Button>
+            <Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => router.push("/calls?mode=video") }>
+              <VideoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -288,6 +284,10 @@ useEffect(() => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem>
+                  <Bell className="w-4 h-4 mr-2" /> Notifications
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 {/* // ADD after line 168 (after <DropdownMenuContent className="w-56" align="end" forceMount>): */}
 {/* <div className="sm:hidden">
   <DropdownMenuItem onClick={() => router.push("/calls?mode=audio")}>
