@@ -54,28 +54,22 @@ const VideoInfo = ({ video }: any) => {
     setDislikes(video.Dislike || 0);
     setIsLiked(false);
     setIsDisliked(false);
-    // ADD THIS — fetch real liked state from backend on mount
-useEffect(() => {
-  if (!user || !video?._id) return;
-  axiosInstance.get(`/like/${user._id}`)
-    .then((res) => {
-      const alreadyLiked = res.data.some((item: any) => item.videoid?._id === video._id || item.videoid === video._id);
-      setIsLiked(alreadyLiked);
-    })
-    .catch(() => {});
-}, [user, video?._id]);
   }, [video]);
 
-//   // ADD THIS — fetch real liked state from backend on mount
-// useEffect(() => {
-//   if (!user || !video?._id) return;
-//   axiosInstance.get(`/like/${user._id}`)
-//     .then((res) => {
-//       const alreadyLiked = res.data.some((item: any) => item.videoid?._id === video._id || item.videoid === video._id);
-//       setIsLiked(alreadyLiked);
-//     })
-//     .catch(() => {});
-// }, [user, video?._id]);
+  useEffect(() => {
+    if (!user || !video?._id) return;
+
+    axiosInstance.get(`/like/${user._id}`)
+      .then((res) => {
+        const alreadyLiked = res.data.some(
+          (item: any) =>
+            item.videoid?._id === video._id ||
+            item.videoid === video._id
+        );
+        setIsLiked(alreadyLiked);
+      })
+      .catch(() => {});
+  }, [user, video?._id]);
 
   useEffect(() => {
     const handleviews = async () => {
