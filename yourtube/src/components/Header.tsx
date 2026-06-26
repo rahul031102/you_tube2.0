@@ -12,6 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import Channeldialogue from "./channeldialogue";
@@ -288,16 +291,22 @@ useEffect(() => {
                   <Bell className="w-4 h-4 mr-2" /> Notifications
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                {/* // ADD after line 168 (after <DropdownMenuContent className="w-56" align="end" forceMount>): */}
-{/* <div className="sm:hidden">
-  <DropdownMenuItem onClick={() => router.push("/calls?mode=audio")}>
-    <PhoneCall className="w-4 h-4 mr-2" /> Audio Call
-  </DropdownMenuItem>
-  <DropdownMenuItem onClick={() => router.push("/calls?mode=video")}>
-    <VideoIcon className="w-4 h-4 mr-2" /> Video Call
-  </DropdownMenuItem>
-  <DropdownMenuSeparator />
-</div> */}
+                <div className="sm:hidden">
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <PhoneCall className="w-4 h-4 mr-2" /> Call
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => router.push("/calls?mode=audio")}>
+                        <PhoneCall className="w-4 h-4 mr-2" /> Audio Call
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push("/calls?mode=video")}>
+                        <VideoIcon className="w-4 h-4 mr-2" /> Video Call
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                  <DropdownMenuSeparator />
+                </div>
                 {user?.channelname ? (
                   <DropdownMenuItem asChild>
                     <Link href={`/channel/${user?._id}`}>Your channel</Link>
