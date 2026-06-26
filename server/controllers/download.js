@@ -110,3 +110,33 @@ export const streamVideoFile = async (req, res) => {
     return res.status(500).json({ message: "Unable to download video." });
   }
 };
+
+export const deleteDownloadEntry = async (req, res) => {
+  const { downloadId } = req.params;
+  const { userId } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(downloadId)) {
+    return res.status(400).json({ message: "Invalid download id." });
+  }
+
+  try {
+    const entry = await download.findById(downloadId);
+    if (!entry) {
+      return res.status(404).json({ message: "Download entry not found." });
+    }
+
+    // Only the owner of this download-history entry can remove it.
+    if (String(entry.viewer) !== String(userId)) {
+      return res.status(403).json({ message: "Not authorized to remove this entry." });
+    }
+
+    // Removes only this history record — the underlying video file in
+    // Cloudinary/storage is left completely untouched.
+    await download.findByIdAndDelete(downloadId);
+
+    return res.status(200).json({ message: "Removed from download history." });
+  } catch (error) {
+    console.error("Delete download entry error:", error);
+    return res.status(500).json({ message: "Something went wrong." });
+  }
+};

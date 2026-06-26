@@ -112,7 +112,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Download, Clock } from "lucide-react";
+import { Download, Clock, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
@@ -131,6 +131,22 @@ export default function DownloadsContent() {
   const [downloads, setDownloads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDeleteEntry = async (downloadId: string) => {
+    if (!user) return;
+    setDeletingId(downloadId);
+    try {
+      await axiosInstance.delete(`/download/entry/${downloadId}`, {
+        data: { userId: user._id },
+      });
+      setDownloads((prev) => prev.filter((item) => item._id !== downloadId));
+    } catch (error) {
+      console.error("Error deleting download entry:", error);
+    } finally {
+      setDeletingId(null);
+    }
+  };
   const { user } = useUser();
 
   useEffect(() => {
@@ -252,6 +268,14 @@ export default function DownloadsContent() {
                   className="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                 >
                   {downloadingId === item._id ? "Downloading..." : "Download again"}
+                </button>
+                <button
+                  onClick={() => handleDeleteEntry(item._id)}
+                  disabled={deletingId === item._id}
+                  title="Remove from download history"
+                  className="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
