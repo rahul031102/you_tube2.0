@@ -63,9 +63,9 @@ const VideoUploader = ({ channelId, channelName }: any) => {
       setIsUploading(true);
       setUploadProgress(0);
       const res = await axiosInstance.post("/video/upload", formdata, {
-         headers: {
-    "Content-Type": "multipart/form-data", // ✅ MUST for FormData
-  },
+        headers: {
+          "Content-Type": "multipart/form-data", // ✅ MUST for FormData
+        },
         onUploadProgress: (progresEvent: any) => {
           const progress = Math.round(
             (progresEvent.loaded * 100) / progresEvent.total
@@ -100,7 +100,7 @@ const VideoUploader = ({ channelId, channelName }: any) => {
               or click to select files
             </p>
             <p className="text-xs text-gray-400 mt-4">
-              MP4, WebM, MOV or AVI • Up to 500MB
+              MP4, WebM, MOV or AVI .
             </p>
             <input
               type="file"
