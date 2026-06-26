@@ -31,7 +31,7 @@ import { getSocket } from "@/lib/socket";
 //   //   image: "https://github.com/shadcn.png?height=32&width=32",
 //   // };
 //   const [searchQuery, setSearchQuery] = useState("");
- 
+
 interface HeaderProps {
   onMenuClick?: () => void;
 }
@@ -41,37 +41,37 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
-const [isdialogeopen, setisdialogeopen] = useState(false);
+  const [isdialogeopen, setisdialogeopen] = useState(false);
   const router = useRouter();
   const [incoming, setIncoming] = useState<any>(null);
   const ringIntervalRef = useRef<number | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   useEffect(() => {
-  if (typeof Notification !== "undefined" && Notification.permission === "default") {
-    Notification.requestPermission();
-  }
-}, []);
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
   useEffect(() => {
-  const unlockAudio = () => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    if (audioCtxRef.current.state === "suspended") {
-      audioCtxRef.current.resume();
-    }
-    window.removeEventListener("click", unlockAudio);
-    window.removeEventListener("touchstart", unlockAudio);
-    window.removeEventListener("keydown", unlockAudio);
-  };
-  window.addEventListener("click", unlockAudio);
-  window.addEventListener("touchstart", unlockAudio);
-  window.addEventListener("keydown", unlockAudio);
-  return () => {
-    window.removeEventListener("click", unlockAudio);
-    window.removeEventListener("touchstart", unlockAudio);
-    window.removeEventListener("keydown", unlockAudio);
-  };
-}, []);
+    const unlockAudio = () => {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      if (audioCtxRef.current.state === "suspended") {
+        audioCtxRef.current.resume();
+      }
+      window.removeEventListener("click", unlockAudio);
+      window.removeEventListener("touchstart", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+    };
+    window.addEventListener("click", unlockAudio);
+    window.addEventListener("touchstart", unlockAudio);
+    window.addEventListener("keydown", unlockAudio);
+    return () => {
+      window.removeEventListener("click", unlockAudio);
+      window.removeEventListener("touchstart", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+    };
+  }, []);
   useEffect(() => {
     const socket = getSocket();
     const onConnect = () => {
@@ -85,7 +85,7 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
     } else {
       socket.on("connect", onConnect);
     }
-  
+
     const onIncoming = ({ fromUserId, roomId, mode, fromName, fromImage }: any) => {
       const removedList = typeof window !== "undefined" ? localStorage.getItem("removed_friends") : null;
       let isRemoved = false;
@@ -95,7 +95,7 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
           if (Array.isArray(ids) && ids.includes(String(fromUserId))) {
             isRemoved = true;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (isRemoved) {
@@ -135,59 +135,59 @@ const [isdialogeopen, setisdialogeopen] = useState(false);
     };
   }, [user, router]);
 
-useEffect(() => {
-  const playBeep = () => {
-    try {
-      const ctx = audioCtxRef.current || new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioCtxRef.current = ctx;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = 800;
-      osc.type = "sine";
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.4);
-    } catch (e) {}
-  };
-
-  // if (incoming) {
-  //   playBeep();
-  //   ringIntervalRef.current = window.setInterval(playBeep, 1000);
-  // } else if (ringIntervalRef.current) {
-    if (incoming) {
-    playBeep();
-    ringIntervalRef.current = window.setInterval(playBeep, 1000);
-    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+  useEffect(() => {
+    const playBeep = () => {
       try {
-        new Notification("Incoming call", {
-          body: `${incoming.fromName || "Someone"} is calling you`,
-          icon: "/favicon.ico",
-        });
-      } catch (err) {
-        // Some mobile browsers (and DevTools mobile emulation) disallow the
-        // plain Notification constructor and require a Service Worker's
-        // showNotification() instead. We don't have a service worker
-        // registered, so just silently skip the notification on those
-        // platforms — the in-app ringing UI and beep still work fine.
-        console.warn("Notification not supported on this platform:", err);
-      }
-    }
-  } else if (ringIntervalRef.current) {
-  clearInterval(ringIntervalRef.current);
-    ringIntervalRef.current = null;
-  }
+        const ctx = audioCtxRef.current || new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioCtxRef.current = ctx;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = 800;
+        osc.type = "sine";
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.4);
+      } catch (e) { }
+    };
 
-  return () => {
-    if (ringIntervalRef.current) {
+    // if (incoming) {
+    //   playBeep();
+    //   ringIntervalRef.current = window.setInterval(playBeep, 1000);
+    // } else if (ringIntervalRef.current) {
+    if (incoming) {
+      playBeep();
+      ringIntervalRef.current = window.setInterval(playBeep, 1000);
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        try {
+          new Notification("Incoming call", {
+            body: `${incoming.fromName || "Someone"} is calling you`,
+            icon: "/favicon.ico",
+          });
+        } catch (err) {
+          // Some mobile browsers (and DevTools mobile emulation) disallow the
+          // plain Notification constructor and require a Service Worker's
+          // showNotification() instead. We don't have a service worker
+          // registered, so just silently skip the notification on those
+          // platforms — the in-app ringing UI and beep still work fine.
+          console.warn("Notification not supported on this platform:", err);
+        }
+      }
+    } else if (ringIntervalRef.current) {
       clearInterval(ringIntervalRef.current);
       ringIntervalRef.current = null;
     }
-  };
-}, [incoming]);  
+
+    return () => {
+      if (ringIntervalRef.current) {
+        clearInterval(ringIntervalRef.current);
+        ringIntervalRef.current = null;
+      }
+    };
+  }, [incoming]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,15 +202,15 @@ useEffect(() => {
   };
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-background text-foreground border-b sticky top-0 z-30">
-    {/* // <header className="flex items-center justify-between px-4 py-2 bg-background text-foreground border-b"> */}
+      {/* // <header className="flex items-center justify-between px-4 py-2 bg-background text-foreground border-b"> */}
       <div className="flex items-center gap-4">
         {/* <Button variant="ghost" size="icon">
           <Menu className="w-6 h-6" />
         </Button> */}
 
         <Button variant="ghost" size="icon" onClick={onMenuClick}>
-  <Menu className="w-6 h-6" />
-</Button>
+          <Menu className="w-6 h-6" />
+        </Button>
 
         <Link href="/" className="flex items-center gap-1">
           <div className="bg-red-600 p-1 rounded">
@@ -225,7 +225,7 @@ useEffect(() => {
       <form
         onSubmit={handleSearch}
         className="hidden sm:flex items-center gap-2 flex-1 max-w-2xl mx-4"
-        // className="flex items-center gap-2 flex-1 max-w-2xl mx-4"
+      // className="flex items-center gap-2 flex-1 max-w-2xl mx-4"
       >
         <div className="flex flex-1">
           <Input
@@ -249,31 +249,38 @@ useEffect(() => {
       </form>
 
 
-<Button
-  variant="ghost"
-  size="icon"
-  className="sm:hidden"
-  onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
->
-  <Search className="w-5 h-5" />
-</Button>      
+      <Button
+        variant="ghost"
+        size="icon"
+        className="sm:hidden"
+        onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+      >
+        <Search className="w-5 h-5" />
+      </Button>
 
       <div className="flex items-center gap-2">
         {user ? (
           <>
-            {/* <Button variant="ghost" size="icon" onClick={() => router.push("/calls?mode=audio") }>
-              <PhoneCall className="w-6 h-6" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => router.push("/calls?mode=video") }>
-              <VideoIcon className="w-6 h-6" />
-            </Button> */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => router.push("/calls?mode=audio")}>
+                  <PhoneCall className="w-4 h-4 mr-2" /> Audio Call
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/calls?mode=video")}>
+                  <VideoIcon className="w-4 h-4 mr-2" /> Video Call
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            <Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => router.push("/calls?mode=audio") }>
-              <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6" />
+            <Button variant="ghost" size="icon">
+              <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
             </Button>
-            <Button variant="ghost" size="icon" className="hidden sm:flex" onClick={() => router.push("/calls?mode=video") }>
-              <VideoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -287,26 +294,6 @@ useEffect(() => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem>
-                  <Bell className="w-4 h-4 mr-2" /> Notifications
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <div className="sm:hidden">
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <PhoneCall className="w-4 h-4 mr-2" /> Call
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => router.push("/calls?mode=audio")}>
-                        <PhoneCall className="w-4 h-4 mr-2" /> Audio Call
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push("/calls?mode=video")}>
-                        <VideoIcon className="w-4 h-4 mr-2" /> Video Call
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                  <DropdownMenuSeparator />
-                </div>
                 {user?.channelname ? (
                   <DropdownMenuItem asChild>
                     <Link href={`/channel/${user?._id}`}>Your channel</Link>
@@ -354,71 +341,71 @@ useEffect(() => {
       </div>
 
       {mobileSearchOpen && (
-  // <div className="sm:hidden px-4 pb-2 flex items-center gap-2">
-    <div className="sm:hidden fixed top-[53px] left-0 right-0 z-20 bg-background border-b px-3 py-2 flex items-center gap-2">
-    <Input
-      type="search"
-      placeholder="Search"
-      value={searchQuery}
-      onKeyPress={handleKeypress}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      className="flex-1"
-      autoFocus
-    />
-    <Button onClick={handleSearch} size="icon">
-      <Search className="w-5 h-5" />
-    </Button>
-  </div>
-)}
-     {incoming && (
-  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4">
-    <div className="bg-card rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in fade-in zoom-in duration-200">
-      <div className="relative w-24 h-24 mx-auto mb-4">
-        <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
-        <Avatar className="w-24 h-24 relative">
-          <AvatarImage src={incoming.fromImage} />
-           <AvatarFallback className="text-2xl">
-              {String(incoming.fromName || incoming.fromUserId)?.[0]?.toUpperCase() || "U"}
-            {/* {String(incoming.fromUserId)?.[0]?.toUpperCase() || "U"} */}
-          </AvatarFallback>
-        </Avatar>
-      </div>
+        // <div className="sm:hidden px-4 pb-2 flex items-center gap-2">
+        <div className="sm:hidden fixed top-[53px] left-0 right-0 z-20 bg-background border-b px-3 py-2 flex items-center gap-2">
+          <Input
+            type="search"
+            placeholder="Search"
+            value={searchQuery}
+            onKeyPress={handleKeypress}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1"
+            autoFocus
+          />
+          <Button onClick={handleSearch} size="icon">
+            <Search className="w-5 h-5" />
+          </Button>
+        </div>
+      )}
+      {incoming && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4">
+          <div className="bg-card rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center animate-in fade-in zoom-in duration-200">
+            <div className="relative w-24 h-24 mx-auto mb-4">
+              <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
+              <Avatar className="w-24 h-24 relative">
+                <AvatarImage src={incoming.fromImage} />
+                <AvatarFallback className="text-2xl">
+                  {String(incoming.fromName || incoming.fromUserId)?.[0]?.toUpperCase() || "U"}
+                  {/* {String(incoming.fromUserId)?.[0]?.toUpperCase() || "U"} */}
+                </AvatarFallback>
+              </Avatar>
+            </div>
 
-      <p className="text-sm text-muted-foreground mb-1">
-        Incoming {incoming.mode === "audio" ? "audio" : "video"} call
-      </p>
-      <h3 className="text-lg font-semibold mb-6">{incoming.fromName || incoming.fromUserId}</h3>
-      {/* <h3 className="text-lg font-semibold mb-6">{incoming.fromUserId}</h3> */}
+            <p className="text-sm text-muted-foreground mb-1">
+              Incoming {incoming.mode === "audio" ? "audio" : "video"} call
+            </p>
+            <h3 className="text-lg font-semibold mb-6">{incoming.fromName || incoming.fromUserId}</h3>
+            {/* <h3 className="text-lg font-semibold mb-6">{incoming.fromUserId}</h3> */}
 
-      <div className="flex gap-4 justify-center">
-        <Button
-          variant="destructive"
-          size="lg"
-          className="rounded-full w-16 h-16 p-0"
-          onClick={() => {
-            const socket = getSocket();
-            socket.emit("call-response", { fromUserId: incoming.fromUserId, targetUserId: user?._id, accepted: false, roomId: incoming.roomId });
-            setIncoming(null);
-          }}
-        >
-          <PhoneOff className="w-6 h-6" />
-        </Button>
-        <Button
-          size="lg"
-          className="rounded-full w-16 h-16 p-0 bg-green-600 hover:bg-green-700"
-          onClick={() => {
-            const socket = getSocket();
-            socket.emit("call-response", { fromUserId: incoming.fromUserId, targetUserId: user?._id, accepted: true, roomId: incoming.roomId });
-            setIncoming(null);
-            router.push(`/call/${incoming.fromUserId}?role=callee&room=${incoming.roomId}&mode=${incoming.mode || "video"}`);
-          }}
-        >
-          {incoming.mode === "audio" ? <PhoneCall className="w-6 h-6" /> : <VideoIcon className="w-6 h-6" />}
-        </Button>
-      </div>
-    </div>
-  </div>
-)}
+            <div className="flex gap-4 justify-center">
+              <Button
+                variant="destructive"
+                size="lg"
+                className="rounded-full w-16 h-16 p-0"
+                onClick={() => {
+                  const socket = getSocket();
+                  socket.emit("call-response", { fromUserId: incoming.fromUserId, targetUserId: user?._id, accepted: false, roomId: incoming.roomId });
+                  setIncoming(null);
+                }}
+              >
+                <PhoneOff className="w-6 h-6" />
+              </Button>
+              <Button
+                size="lg"
+                className="rounded-full w-16 h-16 p-0 bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  const socket = getSocket();
+                  socket.emit("call-response", { fromUserId: incoming.fromUserId, targetUserId: user?._id, accepted: true, roomId: incoming.roomId });
+                  setIncoming(null);
+                  router.push(`/call/${incoming.fromUserId}?role=callee&room=${incoming.roomId}&mode=${incoming.mode || "video"}`);
+                }}
+              >
+                {incoming.mode === "audio" ? <PhoneCall className="w-6 h-6" /> : <VideoIcon className="w-6 h-6" />}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       <Channeldialogue
         isopen={isdialogeopen}
         onclose={() => setisdialogeopen(false)}
@@ -429,4 +416,3 @@ useEffect(() => {
 };
 
 export default Header;
-  
