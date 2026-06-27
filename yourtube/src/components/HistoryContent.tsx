@@ -112,7 +112,7 @@ const handleRemoveFromHistory = async (historyId: string) => {
 
             <div className="flex-1 min-w-0">
               <Link href={`/watch/${item.videoid._id}`}>
-                <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 mb-1">
+                <h3 className="font-medium text-sm line-clamp-3 leading-snug group-hover:text-blue-600 mb-1">
                   {item.videoid.videotitle}
                 </h3>
               </Link>

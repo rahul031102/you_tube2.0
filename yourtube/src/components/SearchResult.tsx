@@ -60,7 +60,7 @@ const SearchResultVideoCard = ({ video }: any) => {
 
       <div className="flex-1 min-w-0 py-1">
         <Link href={`/watch/${video._id}`}>
-          <h3 className="font-medium text-lg line-clamp-2 group-hover:text-blue-600 mb-2">
+          <h3 className="font-medium text-lg line-clamp-3 leading-snug group-hover:text-blue-600 mb-2">
             {video.videotitle}
           </h3>
         </Link>
