@@ -777,6 +777,12 @@ export default function GestureVideoPlayer({ video, allVideos }: GestureVideoPla
         className="relative w-full aspect-video bg-black rounded-none sm:rounded-lg overflow-hidden select-none"
         onMouseMove={showControlsTemp}
         onMouseLeave={() => { if (videoRef.current && !videoRef.current.paused) setShowControls(false); }}
+        onPointerUp={(e) => {
+          // only show controls if tap was in bottom 20% (controls area) or edges
+          const rect = e.currentTarget.getBoundingClientRect();
+          const y = e.clientY - rect.top;
+          if (y >= rect.height * 0.8) showControlsTemp();
+        }}
       >
         {/* Video */}
         <video
