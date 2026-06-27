@@ -119,6 +119,19 @@ export default function GestureVideoPlayer({
   const [activeZone, setActiveZone] = useState<GestureZone | null>(null);
   const armTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Native controls visibility, toggled manually on single tap since
+  // mobile browsers won't reveal them on their own when our gesture
+  // overlay sits on top of the video.
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const controlsHideTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const revealControls = useCallback(() => {
+    setControlsVisible(true);
+    if (controlsHideTimerRef.current) clearTimeout(controlsHideTimerRef.current);
+    controlsHideTimerRef.current = setTimeout(() => setControlsVisible(false), 3000);
+  }, []);
+
+
 
   const isControlRegion = useCallback((clientY: number): boolean => {
     const rect = videoRef.current?.getBoundingClientRect();
@@ -268,7 +281,9 @@ export default function GestureVideoPlayer({
     (zone: GestureZone, tapCount: number) => {
       console.log("Gesture detected", { zone, tapCount });
       if (zone === "left") {
-        if (tapCount === 2) {
+        if (tapCount === 1) {
+          revealControls();
+        } else if (tapCount === 2) {
           handleSeekBackward();
         } else if (tapCount === 3) {
           console.log("Triple left detected: opening comments");
@@ -281,7 +296,9 @@ export default function GestureVideoPlayer({
           handleNextVideo();
         }
       } else if (zone === "right") {
-        if (tapCount === 2) {
+        if (tapCount === 1) {
+          revealControls();
+        } else if (tapCount === 2) {
           handleSeekForward();
         } else if (tapCount === 3) {
           console.log("Triple right detected: closing website");
@@ -300,6 +317,7 @@ export default function GestureVideoPlayer({
       handleNextVideo,
       handleSeekForward,
       handleCloseWebsite,
+      revealControls,
     ]
   );
 
@@ -361,6 +379,7 @@ export default function GestureVideoPlayer({
         if (timer) clearTimeout(timer);
       });
       if (armTimerRef.current) clearTimeout(armTimerRef.current);
+      if (controlsHideTimerRef.current) clearTimeout(controlsHideTimerRef.current);
     };
   }, []);
 
@@ -374,7 +393,7 @@ export default function GestureVideoPlayer({
           key={video?._id}
           ref={videoRef}
           className="w-full h-full"
-          controls
+          controls={controlsVisible}
           poster={""}
           controlsList="nodownload"
           onPlay={handlePlay}
