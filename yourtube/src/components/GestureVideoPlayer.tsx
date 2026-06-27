@@ -389,11 +389,13 @@ export default function GestureVideoPlayer({
           Your browser does not support the video tag.
         </video>
 
-        {/* Quality selector dropdown */}
-        <div className="absolute bottom-14 right-2 z-20">
+        {/* Quality selector — positioned right next to the native controls
+            bar's 3-dot menu so it reads as part of the controls rather
+            than a separate floating overlay. */}
+        <div className="absolute bottom-2 right-12 sm:right-14 z-20">
           <button
             onClick={() => setShowQualityMenu((s) => !s)}
-            className="bg-black/70 text-white text-xs px-2 py-1 rounded hover:bg-black/90"
+            className="bg-black/60 text-white text-[11px] px-2 py-1 rounded hover:bg-black/80"
           >
             {currentQuality === "auto" ? "Auto" : currentQuality}
           </button>

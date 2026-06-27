@@ -258,12 +258,12 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         <Search className="w-5 h-5" />
       </Button>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 pr-1 sm:pr-0">
         {user ? (
           <>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="w-9 h-9 sm:w-10 sm:h-10">
                   <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6" />
                 </Button>
               </DropdownMenuTrigger>
