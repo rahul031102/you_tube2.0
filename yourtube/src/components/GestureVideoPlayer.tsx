@@ -3,7 +3,10 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Play, Pause, ChevronRight, MessageCircle, X } from "lucide-react";
+import {
+  Play, Pause, ChevronRight, ChevronLeft, MessageCircle, X,
+  Volume2, VolumeX, Maximize, Minimize, Settings,
+} from "lucide-react";
 import { useUser } from "@/lib/AuthContext";
 
 interface GestureVideoPlayerProps {
@@ -24,29 +27,68 @@ interface FeedbackMessage {
   duration: number;
 }
 
-export default function GestureVideoPlayer({
-  video,
-  allVideos,
-}: GestureVideoPlayerProps) {
+function formatTime(s: number) {
+  if (isNaN(s)) return "0:00";
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+export default function GestureVideoPlayer({ video, allVideos }: GestureVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user } = useUser();
-  const [limitReached, setLimitReached] = useState(false);
 
-  // Quality selector states
+  // Watch limit
+  const [limitReached, setLimitReached] = useState(false);
+  const getWatchLimitSeconds = (plan?: string) => {
+    const p = plan === "premium" ? "gold" : plan;
+    if (p === "bronze") return 7 * 60;
+    if (p === "silver") return 10 * 60;
+    if (p === "gold") return null;
+    return 5 * 60;
+  };
+  const watchLimitSeconds = getWatchLimitSeconds(user?.plan);
+
+  // Player state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [isClosing, setIsClosing] = useState(false);
+  const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Quality
   const [qualities, setQualities] = useState<Record<string, string>>({});
-  const [currentQuality, setCurrentQuality] = useState<string>("auto");
+  const [currentQuality, setCurrentQuality] = useState("Auto");
   const [showQualityMenu, setShowQualityMenu] = useState(false);
 
-  // Force reload video when video ID changes
+  // Feedback
+  const [feedbackMessages, setFeedbackMessages] = useState<FeedbackMessage[]>([]);
+  const feedbackIdRef = useRef(0);
+
+  // Gesture tracking
+  const tapCountRef = useRef<Record<GestureZone, number>>({ left: 0, center: 0, right: 0 });
+  const tapTimeRef = useRef<Record<GestureZone, number>>({ left: 0, center: 0, right: 0 });
+  const tapTimerRef = useRef<Record<GestureZone, NodeJS.Timeout | null>>({ left: null, center: null, right: null });
+  const activeZoneRef = useRef<GestureZone | null>(null);
+  const armTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Reset on video change
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.load();
-      setLimitReached(false); // Reset watch limit when video changes
+      setLimitReached(false);
+      setCurrentTime(0);
+      setIsPlaying(false);
     }
   }, [video?._id]);
 
-  // Fetch available qualities for the current video
+  // Fetch qualities
   useEffect(() => {
     const fetchQualities = async () => {
       if (!video?._id) return;
@@ -54,430 +96,337 @@ export default function GestureVideoPlayer({
         const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/video/qualities/${video._id}`);
         const data = await res.json();
         setQualities(data.qualities || {});
-      } catch (e) {
-        console.log(e);
-      }
+      } catch { }
     };
     fetchQualities();
-    setCurrentQuality("auto"); // reset quality selection when video changes
+    setCurrentQuality("Auto");
   }, [video?._id]);
 
-  const handleQualityChange = (label: string, url: string) => {
-    const vid = videoRef.current;
-    if (!vid) return;
-    const currentTime = vid.currentTime;
-    const wasPlaying = !vid.paused;
-    vid.src = url;
-    vid.load();
-    vid.currentTime = currentTime;
-    if (wasPlaying) vid.play().catch(() => {});
-    setCurrentQuality(label);
-    setShowQualityMenu(false);
-  };
-
-  const getWatchLimitSeconds = (plan?: string) => {
-    const normalizedPlan = plan === "premium" ? "gold" : plan;
-    if (normalizedPlan === "bronze") return 7 * 60;
-    if (normalizedPlan === "silver") return 10 * 60;
-    if (normalizedPlan === "gold") return null;
-    return 5 * 60;
-  };
-
-  const watchLimitSeconds = getWatchLimitSeconds(user?.plan);
-
-  // Tap tracking
-  const tapCountRef = useRef<Record<GestureZone, number>>({
-    left: 0,
-    center: 0,
-    right: 0,
-  });
-  const tapTimeRef = useRef<Record<GestureZone, number>>({
-    left: 0,
-    center: 0,
-    right: 0,
-  });
-  const tapTimerRef = useRef<Record<GestureZone, NodeJS.Timeout | null>>({
-    left: null,
-    center: null,
-    right: null,
-  });
-
-  // Feedback messages
-  const [feedbackMessages, setFeedbackMessages] = useState<FeedbackMessage[]>(
-    []
-  );
-  const feedbackIdRef = useRef(0);
-
-  // Website closed state
-  const [isClosing, setIsClosing] = useState(false);
-
-  // Which third of the player is currently "armed" to intercept taps.
-  // Zones are pointer-events-none by default so a lone tap reaches the
-  // native <video> element underneath; we arm a zone only briefly after
-  // detecting where a tap landed, just long enough to catch a fast
-  // 2nd/3rd tap for the gesture system.
-  const [activeZone, setActiveZone] = useState<GestureZone | null>(null);
-  const armTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Native controls visibility, toggled manually on single tap since
-  // mobile browsers won't reveal them on their own when our gesture
-  // overlay sits on top of the video.
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const controlsHideTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const revealControls = useCallback(() => {
-    setControlsVisible(true);
-    if (controlsHideTimerRef.current) clearTimeout(controlsHideTimerRef.current);
-    controlsHideTimerRef.current = setTimeout(() => setControlsVisible(false), 3000);
+  // Controls auto-hide
+  const showControlsTemp = useCallback(() => {
+    setShowControls(true);
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    controlsTimerRef.current = setTimeout(() => {
+      if (videoRef.current && !videoRef.current.paused) setShowControls(false);
+    }, 3000);
   }, []);
 
-
-
-  const isControlRegion = useCallback((clientY: number): boolean => {
-    const rect = videoRef.current?.getBoundingClientRect();
-    if (!rect) return false;
-
-    // Exclude the bottom native control bar area from gesture detection.
-    const controlHeight = Math.max(80, rect.height * 0.18);
-    const y = clientY - rect.top;
-    return y >= rect.height - controlHeight;
+  // Fullscreen change listener
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
-  const getGestureZone = useCallback((zone: GestureZone, e: React.MouseEvent<HTMLDivElement> | React.PointerEvent<HTMLDivElement>) => {
-    if (isControlRegion(e.clientY)) return null;
-    return zone;
-  }, [isControlRegion]);
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      Object.values(tapTimerRef.current).forEach((t) => t && clearTimeout(t));
+      if (armTimerRef.current) clearTimeout(armTimerRef.current);
+      if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    };
+  }, []);
 
-  // Add visual feedback
-  const showFeedback = useCallback(
-    (text: string, icon?: React.ReactNode, duration = 1000) => {
-      const id = `feedback-${feedbackIdRef.current++}`;
-      const newMessage: FeedbackMessage = { id, text, icon, duration };
+  // --- Feedback ---
+  const showFeedback = useCallback((text: string, icon?: React.ReactNode, duration = 800) => {
+    const id = `fb-${feedbackIdRef.current++}`;
+    setFeedbackMessages((prev) => [...prev, { id, text, icon, duration }]);
+    setTimeout(() => setFeedbackMessages((prev) => prev.filter((m) => m.id !== id)), duration);
+  }, []);
 
-      setFeedbackMessages((prev) => [...prev, newMessage]);
-
-      setTimeout(() => {
-        setFeedbackMessages((prev) =>
-          prev.filter((msg) => msg.id !== id)
-        );
-      }, duration);
-    },
-    []
-  );
-
-  // Gesture handlers
-  const handleTogglePlayback = useCallback(() => {
+  // --- Gesture actions ---
+  const togglePlay = useCallback(() => {
     const vid = videoRef.current;
     if (!vid) return;
-    if (limitReached) {
-      showFeedback("Watch limit reached", <Pause className="w-8 h-8" />);
-      vid.pause();
-      if (watchLimitSeconds !== null) {
-        vid.currentTime = watchLimitSeconds;
-      }
-      return;
-    }
-
+    if (limitReached) { showFeedback("Watch limit reached"); return; }
     if (vid.paused) {
-      vid.play().catch(() => {});
-      showFeedback("Playing", <Play className="w-8 h-8" />);
+      vid.play().catch(() => { });
+      showFeedback("", <Play className="w-10 h-10" />);
+      setIsPlaying(true);
     } else {
       vid.pause();
-      showFeedback("Paused", <Pause className="w-8 h-8" />);
+      showFeedback("", <Pause className="w-10 h-10" />);
+      setIsPlaying(false);
     }
-  }, [showFeedback, limitReached, watchLimitSeconds]);
+    showControlsTemp();
+  }, [limitReached, showFeedback, showControlsTemp]);
 
-  const handlePlay = useCallback(() => {
-    const vid = videoRef.current;
-    if (!vid || !watchLimitSeconds) return;
-
-    if (limitReached || vid.currentTime >= watchLimitSeconds) {
-      vid.pause();
-      vid.currentTime = watchLimitSeconds;
-      setLimitReached(true);
-    }
-  }, [limitReached, watchLimitSeconds]);
-
-  const handleSeekForward = useCallback(() => {
+  const seekForward = useCallback(() => {
     const vid = videoRef.current;
     if (!vid) return;
+    vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 10);
+    showFeedback("+10s", <ChevronRight className="w-10 h-10" />);
+    showControlsTemp();
+  }, [showFeedback, showControlsTemp]);
 
-    const nextTime = Math.min(vid.duration || 0, vid.currentTime + 10);
-    vid.currentTime = nextTime;
-    showFeedback("+10 seconds", <ChevronRight className="w-8 h-8" />);
-  }, [showFeedback]);
-
-  const handleSeekBackward = useCallback(() => {
+  const seekBackward = useCallback(() => {
     const vid = videoRef.current;
     if (!vid) return;
+    vid.currentTime = Math.max(0, vid.currentTime - 10);
+    showFeedback("-10s", <ChevronLeft className="w-10 h-10" />);
+    showControlsTemp();
+  }, [showFeedback, showControlsTemp]);
 
-    const nextTime = Math.max(0, vid.currentTime - 10);
-    vid.currentTime = nextTime;
-    showFeedback("-10 seconds");
-  }, [showFeedback]);
-
-  const handleTimeUpdate = useCallback(() => {
-    const vid = videoRef.current;
-    if (!vid || limitReached || !watchLimitSeconds) return;
-
-    if (vid.currentTime >= watchLimitSeconds) {
-      vid.pause();
-      vid.currentTime = watchLimitSeconds;
-      setLimitReached(true);
-    }
-  }, [limitReached, watchLimitSeconds]);
-
-  const handleSeeking = useCallback(() => {
-    const vid = videoRef.current;
-    if (!vid || !watchLimitSeconds) return;
-    if (vid.currentTime > watchLimitSeconds) {
-      vid.currentTime = watchLimitSeconds;
-    }
-  }, [watchLimitSeconds]);
-
-  const handleNextVideo = useCallback(() => {
+  const nextVideo = useCallback(() => {
     if (!allVideos?.length || !video?._id) return;
-
-    const currentIndex = allVideos.findIndex((v) => v._id === video._id);
-    const nextVideo = allVideos[(currentIndex + 1) % allVideos.length];
-
-    if (nextVideo?._id) {
-      showFeedback("Next video", <ChevronRight className="w-8 h-8" />);
-      setTimeout(() => {
-        router.push(`/watch/${nextVideo._id}`);
-      }, 400);
+    const idx = allVideos.findIndex((v) => v._id === video._id);
+    const next = allVideos[(idx + 1) % allVideos.length];
+    if (next?._id) {
+      showFeedback("Next video", <ChevronRight className="w-10 h-10" />);
+      setTimeout(() => router.push(`/watch/${next._id}`), 400);
     }
   }, [allVideos, video?._id, router, showFeedback]);
 
-  const handleOpenComments = useCallback(() => {
-    const commentsSection = document.getElementById("comments-section");
-    if (commentsSection) {
-      showFeedback("Comments", <MessageCircle className="w-8 h-8" />);
-      setTimeout(() => {
-        commentsSection.scrollIntoView({ behavior: "smooth" });
-      }, 300);
+  const openComments = useCallback(() => {
+    const el = document.getElementById("comments-section");
+    if (el) {
+      showFeedback("Comments", <MessageCircle className="w-10 h-10" />);
+      setTimeout(() => el.scrollIntoView({ behavior: "smooth" }), 300);
     }
   }, [showFeedback]);
 
-  const handleCloseWebsite = useCallback(() => {
-    showFeedback("Closing website...", <X className="w-8 h-8" />);
+  const closeWebsite = useCallback(() => {
+    showFeedback("Closing...", <X className="w-10 h-10" />);
     setIsClosing(true);
-
-    try {
-      if (typeof window !== "undefined") {
-        window.close();
-      }
-    } catch {
-      // Browser prevented window.close()
-    }
-
-    setTimeout(() => {
-      router.push("/");
-    }, 1500);
+    try { window.close(); } catch { }
+    setTimeout(() => router.push("/"), 1500);
   }, [router, showFeedback]);
 
-  // Handle tap gesture completion
-  const handleTapComplete = useCallback(
-    (zone: GestureZone, tapCount: number) => {
-      console.log("Gesture detected", { zone, tapCount });
-      if (zone === "left") {
-        if (tapCount === 1) {
-          revealControls();
-        } else if (tapCount === 2) {
-          handleSeekBackward();
-        } else if (tapCount === 3) {
-          console.log("Triple left detected: opening comments");
-          handleOpenComments();
-        }
-      } else if (zone === "center") {
-        if (tapCount === 1) {
-          handleTogglePlayback();
-        } else if (tapCount === 3) {
-          handleNextVideo();
-        }
-      } else if (zone === "right") {
-        if (tapCount === 1) {
-          revealControls();
-        } else if (tapCount === 2) {
-          handleSeekForward();
-        } else if (tapCount === 3) {
-          console.log("Triple right detected: closing website");
-          handleCloseWebsite();
-        }
-      }
-
-      // Reset tap count for this zone
-      tapCountRef.current[zone] = 0;
-      tapTimeRef.current[zone] = 0;
-    },
-    [
-      handleSeekBackward,
-      handleOpenComments,
-      handleTogglePlayback,
-      handleNextVideo,
-      handleSeekForward,
-      handleCloseWebsite,
-      revealControls,
-    ]
-  );
-
-  const handleWrapperPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const third = rect.width / 3;
-      const zone: GestureZone = x < third ? "left" : x < third * 2 ? "center" : "right";
-
-      if (isControlRegion(e.clientY)) return;
-
-      setActiveZone(zone);
-      if (armTimerRef.current) clearTimeout(armTimerRef.current);
-      armTimerRef.current = setTimeout(() => setActiveZone(null), 450);
-
-      const now = Date.now();
-      const lastTapTime = tapTimeRef.current[zone];
-      const isRepeatTap = now - lastTapTime <= 400;
-
-      if (isRepeatTap) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-
-      if (tapTimerRef.current[zone]) {
-        clearTimeout(tapTimerRef.current[zone]!);
-        tapTimerRef.current[zone] = null;
-      }
-
-      if (!isRepeatTap) {
-        tapCountRef.current[zone] = 1;
-      } else {
-        tapCountRef.current[zone] += 1;
-      }
-
-      tapTimeRef.current[zone] = now;
-
-      tapTimerRef.current[zone] = setTimeout(() => {
-        handleTapComplete(zone, tapCountRef.current[zone]);
-      }, 400);
-    },
-    [isControlRegion, handleTapComplete]
-  );
-
-  const handleZoneDoubleClickCapture = useCallback(
-    (zone: GestureZone) => (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!getGestureZone(zone, e)) return;
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    [getGestureZone]
-  );
-
-  // Cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(tapTimerRef.current).forEach((timer) => {
-        if (timer) clearTimeout(timer);
-      });
-      if (armTimerRef.current) clearTimeout(armTimerRef.current);
-      if (controlsHideTimerRef.current) clearTimeout(controlsHideTimerRef.current);
-    };
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen().catch(() => { });
+    } else {
+      document.exitFullscreen().catch(() => { });
+    }
   }, []);
 
+  const toggleMute = useCallback(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    vid.muted = !vid.muted;
+    setIsMuted(vid.muted);
+  }, []);
+
+  const handleVolumeChange = useCallback((val: number) => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    vid.volume = val;
+    setVolume(val);
+    setIsMuted(val === 0);
+  }, []);
+
+  const handleQualityChange = useCallback((label: string, url: string) => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    const t = vid.currentTime;
+    const wasPlaying = !vid.paused;
+    vid.src = url;
+    vid.load();
+    vid.currentTime = t;
+    if (wasPlaying) vid.play().catch(() => { });
+    setCurrentQuality(label);
+    setShowQualityMenu(false);
+  }, []);
+
+  // --- Gesture tap handler ---
+  const handleTapComplete = useCallback((zone: GestureZone, tapCount: number) => {
+    if (zone === "left") {
+      if (tapCount === 1) showControlsTemp();
+      else if (tapCount === 2) seekBackward();
+      else if (tapCount === 3) openComments();
+    } else if (zone === "center") {
+      if (tapCount === 1) togglePlay();
+      else if (tapCount === 3) nextVideo();
+    } else if (zone === "right") {
+      if (tapCount === 1) showControlsTemp();
+      else if (tapCount === 2) seekForward();
+      else if (tapCount === 3) closeWebsite();
+    }
+    tapCountRef.current[zone] = 0;
+    tapTimeRef.current[zone] = 0;
+  }, [seekBackward, openComments, togglePlay, nextVideo, seekForward, closeWebsite, showControlsTemp]);
+
+  const handleWrapperPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const third = rect.width / 3;
+    const zone: GestureZone = x < third ? "left" : x < third * 2 ? "center" : "right";
+
+    // ignore taps in bottom 20% (custom controls area)
+    const y = e.clientY - rect.top;
+    if (y >= rect.height * 0.8) return;
+
+    activeZoneRef.current = zone;
+    if (armTimerRef.current) clearTimeout(armTimerRef.current);
+    armTimerRef.current = setTimeout(() => { activeZoneRef.current = null; }, 450);
+
+    const now = Date.now();
+    const isRepeat = now - tapTimeRef.current[zone] <= 400;
+    if (isRepeat) { e.preventDefault(); e.stopPropagation(); }
+
+    if (tapTimerRef.current[zone]) { clearTimeout(tapTimerRef.current[zone]!); tapTimerRef.current[zone] = null; }
+    tapCountRef.current[zone] = isRepeat ? tapCountRef.current[zone] + 1 : 1;
+    tapTimeRef.current[zone] = now;
+    tapTimerRef.current[zone] = setTimeout(() => handleTapComplete(zone, tapCountRef.current[zone]), 400);
+  }, [handleTapComplete]);
+
+  // Progress bar click
+  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const vid = videoRef.current;
+    if (!vid || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    const target = pct * duration;
+    if (watchLimitSeconds && target > watchLimitSeconds) return;
+    vid.currentTime = target;
+    setCurrentTime(target);
+    showControlsTemp();
+  }, [duration, watchLimitSeconds, showControlsTemp]);
+
+  const progressPct = duration ? (currentTime / duration) * 100 : 0;
+  const limitPct = watchLimitSeconds && duration ? (watchLimitSeconds / duration) * 100 : 100;
+
   return (
-    <div className="space-y-4">
-      {/* Video Player Container */}
-      <div className="relative w-full aspect-video rounded-none sm:rounded-lg overflow-hidden bg-black">
-      {/* <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-lg"> */}
-        {/* Native Video Element */}
+    <div className="space-y-2">
+      {/* Player */}
+      <div
+        ref={containerRef}
+        className="relative w-full aspect-video bg-black rounded-none sm:rounded-lg overflow-hidden select-none"
+        onMouseMove={showControlsTemp}
+        onMouseLeave={() => { if (videoRef.current && !videoRef.current.paused) setShowControls(false); }}
+        onPointerUp={(e) => {
+          // only show controls if tap was in bottom 20% (controls area) or edges
+          const rect = e.currentTarget.getBoundingClientRect();
+          const y = e.clientY - rect.top;
+          if (y >= rect.height * 0.8) showControlsTemp();
+        }}
+      >
+        {/* Video */}
         <video
           key={video?._id}
           ref={videoRef}
           className="w-full h-full"
-          controls={controlsVisible}
-          poster={""}
-          controlsList="nodownload"
-          onPlay={handlePlay}
-          onTimeUpdate={handleTimeUpdate}
-          onSeeking={handleSeeking}
-        >
-          <source
-            src={video?.filepath}
-            // src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${video?.filepath}`}
-            type="video/mp4"
-          />
-          Your browser does not support the video tag.
-        </video>
+          src={video?.filepath}
+          onPlay={() => { setIsPlaying(true); showControlsTemp(); }}
+          onPause={() => { setIsPlaying(false); setShowControls(true); }}
+          onTimeUpdate={() => {
+            const vid = videoRef.current;
+            if (!vid) return;
+            setCurrentTime(vid.currentTime);
+            if (watchLimitSeconds && !limitReached && vid.currentTime >= watchLimitSeconds) {
+              vid.pause();
+              vid.currentTime = watchLimitSeconds;
+              setLimitReached(true);
+            }
+          }}
+          onLoadedMetadata={() => { if (videoRef.current) setDuration(videoRef.current.duration); }}
+          onSeeking={() => {
+            const vid = videoRef.current;
+            if (vid && watchLimitSeconds && vid.currentTime > watchLimitSeconds) vid.currentTime = watchLimitSeconds;
+          }}
+          onVolumeChange={() => { if (videoRef.current) { setVolume(videoRef.current.volume); setIsMuted(videoRef.current.muted); } }}
+        />
 
-        {/* Quality selector — positioned right next to the native controls
-            bar's 3-dot menu so it reads as part of the controls rather
-            than a separate floating overlay. */}
-        <div className="absolute bottom-2 right-12 sm:right-14 z-20">
-          <button
-            onClick={() => setShowQualityMenu((s) => !s)}
-            className="bg-black/60 text-white text-[11px] px-2 py-1 rounded hover:bg-black/80"
-          >
-            {currentQuality === "auto" ? "Auto" : currentQuality}
-          </button>
-          {showQualityMenu && (
-            <div className="absolute bottom-full right-0 mb-1 bg-black/90 rounded overflow-hidden min-w-[100px]">
-              <button
-                onClick={() => handleQualityChange("auto", video?.filepath || "")}
-                className="block w-full text-left text-white text-xs px-3 py-2 hover:bg-white/10"
-              >
-                Auto
-              </button>
-              {Object.entries(qualities).map(([label, url]) => (
-                <button
-                  key={label}
-                  onClick={() => handleQualityChange(label, url)}
-                  className="block w-full text-left text-white text-xs px-3 py-2 hover:bg-white/10"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Gesture Zones (top area only, native controls remain untouched).
-            pointer-events-none by default so a lone tap passes straight
-            through to the native <video> element below, letting mobile
-            browsers show their built-in controls. */}
+        {/* Gesture overlay — covers top 80%, bottom 20% is controls */}
         <div
-          className="absolute inset-x-0 top-0 h-[70%] z-10 flex"
+          className="absolute inset-x-0 top-0 z-10 flex"
+          style={{ height: "80%" }}
           onPointerDownCapture={handleWrapperPointerDown}
         >
-          <div
-            className={`relative w-1/3 ${activeZone === "left" ? "pointer-events-auto" : "pointer-events-none"}`}
-            onDoubleClickCapture={handleZoneDoubleClickCapture("left")}
-          >
-            <div className="absolute inset-0 opacity-0 hover:opacity-10 bg-blue-500 transition-opacity pointer-events-none" />
-          </div>
-          <div
-            className={`relative w-1/3 ${activeZone === "center" ? "pointer-events-auto" : "pointer-events-none"}`}
-            onDoubleClickCapture={handleZoneDoubleClickCapture("center")}
-          >
-            <div className="absolute inset-0 opacity-0 hover:opacity-10 bg-green-500 transition-opacity pointer-events-none" />
-          </div>
-          <div
-            className={`relative w-1/3 ${activeZone === "right" ? "pointer-events-auto" : "pointer-events-none"}`}
-            onDoubleClickCapture={handleZoneDoubleClickCapture("right")}
-          >
-            <div className="absolute inset-0 opacity-0 hover:opacity-10 bg-red-500 transition-opacity pointer-events-none" />
-          </div>
+          <div className="w-1/3 h-full" />
+          <div className="w-1/3 h-full" />
+          <div className="w-1/3 h-full" />
         </div>
 
-        {/* Feedback Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
+        {/* Feedback overlay */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
           {feedbackMessages.map((msg) => (
-            <div
-              key={msg.id}
-              className="text-white text-center animate-fade-in-out"
-            >
-              <div className="text-5xl mb-2">{msg.icon}</div>
-              <div className="text-xl font-semibold">{msg.text}</div>
+            <div key={msg.id} className="text-white text-center animate-fade-in-out bg-black/40 rounded-full p-4">
+              {msg.icon && <div className="flex justify-center mb-1">{msg.icon}</div>}
+              {msg.text && <div className="text-sm font-semibold">{msg.text}</div>}
             </div>
           ))}
+        </div>
+
+        {/* Custom Controls */}
+        <div
+          className={`absolute inset-x-0 bottom-0 z-30 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.85))" }}
+        >
+          {/* Progress bar */}
+          <div className="px-3 pt-2">
+            <div
+              className="relative h-1 hover:h-2 transition-all rounded-full bg-white/30 cursor-pointer"
+              onClick={handleProgressClick}
+            >
+              {/* limit marker */}
+              {watchLimitSeconds && duration && (
+                <div
+                  className="absolute top-0 h-full bg-yellow-400/40 rounded-full"
+                  style={{ width: `${limitPct}%` }}
+                />
+              )}
+              {/* played */}
+              <div className="absolute top-0 h-full bg-red-500 rounded-full" style={{ width: `${progressPct}%` }} />
+              {/* thumb */}
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full shadow"
+                style={{ left: `calc(${progressPct}% - 6px)` }}
+              />
+            </div>
+          </div>
+
+          {/* Buttons row */}
+          <div className="flex items-center justify-between px-3 py-2">
+            {/* Left: play + volume + time */}
+            <div className="flex items-center gap-2">
+              <button onClick={togglePlay} className="text-white hover:text-red-400 transition-colors">
+                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              </button>
+              <button onClick={toggleMute} className="text-white hover:text-red-400 transition-colors">
+                {isMuted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </button>
+              <input
+                type="range" min={0} max={1} step={0.05} value={isMuted ? 0 : volume}
+                onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                className="w-16 sm:w-20 accent-red-500 cursor-pointer"
+              />
+              <span className="text-white text-xs font-mono">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
+            </div>
+
+            {/* Right: quality + fullscreen */}
+            <div className="flex items-center gap-2 relative">
+              <button
+                onClick={() => setShowQualityMenu((s) => !s)}
+                className="text-white text-xs flex items-center gap-1 hover:text-red-400"
+              >
+                <Settings className="w-4 h-4" />
+                <span className="hidden sm:inline">{currentQuality}</span>
+              </button>
+              {showQualityMenu && (
+                <div className="absolute bottom-8 right-8 bg-black/90 rounded overflow-hidden min-w-[90px] z-50">
+                  <button
+                    onClick={() => handleQualityChange("Auto", video?.filepath || "")}
+                    className="block w-full text-left text-white text-xs px-3 py-2 hover:bg-white/10"
+                  >Auto</button>
+                  {Object.entries(qualities).map(([label, url]) => (
+                    <button
+                      key={label}
+                      onClick={() => handleQualityChange(label, url)}
+                      className="block w-full text-left text-white text-xs px-3 py-2 hover:bg-white/10"
+                    >{label}</button>
+                  ))}
+                </div>
+              )}
+              <button onClick={toggleFullscreen} className="text-white hover:text-red-400 transition-colors">
+                {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Watch limit overlay */}
@@ -486,21 +435,18 @@ export default function GestureVideoPlayer({
             <div className="bg-white/10 border border-white/20 rounded-3xl p-8 max-w-md">
               <p className="text-2xl font-semibold text-white">Watch limit reached</p>
               <p className="mt-3 text-sm text-gray-200">
-                Your current plan allows {Math.floor(watchLimitSeconds / 60)} minutes of playback.
-              </p>
-              <p className="mt-2 text-sm text-gray-200">
-                Upgrade to a higher plan to continue watching this video.
+                Your plan allows {Math.floor(watchLimitSeconds / 60)} min of playback.
               </p>
               <Link href="/premium" className="mt-6 inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-500">
-                View upgrade plans
+                Upgrade plan
               </Link>
             </div>
           </div>
         )}
 
-        {/* Closing Overlay */}
+        {/* Closing overlay */}
         {isClosing && (
-          <div className="absolute inset-0 bg-black/80 flex items-center justify-center" style={{ zIndex: 50 }}>
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
             <div className="text-white text-center">
               <X className="w-16 h-16 mx-auto mb-4" />
               <p className="text-2xl font-semibold mb-2">Website Closed</p>
@@ -510,42 +456,22 @@ export default function GestureVideoPlayer({
         )}
       </div>
 
-      {/* Zone Information (optional - for user guidance) */}
+      {/* Gesture guide */}
       <div className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded border border-border">
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div>
-            <p className="font-semibold text-gray-700">Left</p>
-            <p>2x: -10s | 3x: Comments</p>
-          </div>
-          <div>
-            <p className="font-semibold text-gray-700">Center</p>
-            <p>1x: Play/Pause | 3x: Next</p>
-          </div>
-          <div>
-            <p className="font-semibold text-gray-700">Right</p>
-            <p>2x: +10s | 3x: Close</p>
-          </div>
+          <div><p className="font-semibold">Left</p><p>2x: -10s | 3x: Comments</p></div>
+          <div><p className="font-semibold">Center</p><p>1x: Play/Pause | 3x: Next</p></div>
+          <div><p className="font-semibold">Right</p><p>2x: +10s | 3x: Close</p></div>
         </div>
       </div>
 
       <style jsx>{`
         @keyframes fadeInOut {
-          0% {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          50% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          100% {
-            opacity: 0;
-            transform: scale(0.8);
-          }
+          0% { opacity: 0; transform: scale(0.8); }
+          40% { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(0.8); }
         }
-        .animate-fade-in-out {
-          animation: fadeInOut 1s ease-in-out;
-        }
+        .animate-fade-in-out { animation: fadeInOut 0.8s ease-in-out; }
       `}</style>
     </div>
   );
