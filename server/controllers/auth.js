@@ -2,6 +2,25 @@ import mongoose from "mongoose";
 import users from "../Modals/Auth.js";
 import jwt from "jsonwebtoken";
 
+export const getLocation = async (req, res) => {
+  try {
+    const upstream = await fetch("https://ipapi.co/json");
+    if (!upstream.ok) {
+      return res.status(200).json({});
+    }
+
+    const data = await upstream.json();
+    return res.status(200).json({
+      region: data.region,
+      country: data.country_name,
+      countryCode: data.country_code,
+    });
+  } catch (error) {
+    console.error("Location lookup error:", error);
+    return res.status(200).json({});
+  }
+};
+
 export const login = async (req, res) => {
   const { email, name, image } = req.body;
 

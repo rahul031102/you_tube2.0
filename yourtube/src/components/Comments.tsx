@@ -33,8 +33,7 @@ const commentValidation = (text: string) => {
 
 const getCityFromIP = async () => {
   try {
-    const res = await fetch("https://ipapi.co/json");
-    const data = await res.json();
+    const { data } = await axiosInstance.get("/user/location");
     return data.city || "Unknown city";
   } catch (error) {
     return "Unknown city";

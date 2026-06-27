@@ -5,18 +5,13 @@ import { createContext } from "react";
 import { provider, auth } from "./firebase";
 import axiosInstance from "./axiosinstance";
 import { useEffect, useContext } from "react";
+import { fetchRegion } from "./geolocation";
 
 const UserContext = createContext();
 
 const detectLocation = async () => {
   try {
-    const res = await fetch("https://ipapi.co/json");
-    const data = await res.json();
-    return {
-      region: data.region,
-      country: data.country_name,
-      countryCode: data.country_code,
-    };
+    return (await fetchRegion()) || {};
   } catch {
     return {};
   }

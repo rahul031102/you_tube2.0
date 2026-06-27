@@ -1,3 +1,5 @@
+import axiosInstance from "./axiosinstance";
+
 export const SOUTH_INDIAN_STATES = [
   "tamil nadu",
   "kerala",
@@ -10,13 +12,11 @@ const normalize = (v?: string) => (v || "").trim().toLowerCase();
 
 export async function fetchRegion() {
   try {
-    const res = await fetch("https://ipapi.co/json");
-    if (!res.ok) return null;
-    const data = await res.json();
+    const { data } = await axiosInstance.get("/user/location");
     return {
-      region: normalize(data.region),
-      country: normalize(data.country_name),
-      countryCode: normalize(data.country_code),
+      region: normalize(data?.region),
+      country: normalize(data?.country),
+      countryCode: normalize(data?.countryCode),
     };
   } catch (e) {
     return null;
