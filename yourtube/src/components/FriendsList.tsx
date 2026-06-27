@@ -19,7 +19,7 @@ interface FriendsListProps {
   mode?: "audio" | "video";
 }
 
-export default function FriendsList({ mode = "video" }: FriendsListProps) {
+export default function FriendsList({ mode }: FriendsListProps) {
   const router = useRouter();
   const { user } = useUser();
   const [calling, setCalling] = useState<string | null>(null);
@@ -207,50 +207,54 @@ export default function FriendsList({ mode = "video" }: FriendsListProps) {
               <div className="flex items-center gap-2">
                 {/* Desktop layout: shown on md and above */}
                 <div className="hidden md:flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    disabled={isCalling}
-                    onClick={() => handleCall(String(f._id), realName, "audio")}
-                    title="Audio call"
-                  >
-                    <PhoneCall className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="icon"
-                    disabled={isCalling}
-                    onClick={() => handleCall(String(f._id), realName, "video")}
-                    title="Video call"
-                  >
-                    <VideoIcon className="w-4 h-4" />
-                  </Button>
+                  {mode === "audio" && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={isCalling}
+                      onClick={() => handleCall(String(f._id), realName, "audio")}
+                      title="Audio call"
+                    >
+                      <PhoneCall className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {mode === "video" && (
+                    <Button
+                      variant="default"
+                      size="icon"
+                      disabled={isCalling}
+                      onClick={() => handleCall(String(f._id), realName, "video")}
+                      title="Video call"
+                    >
+                      <VideoIcon className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
 
                 {/* Mobile layout: shown below md breakpoint */}
                 <div className="md:hidden">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        disabled={isCalling}
-                        title="Call options"
-                      >
-                        <PhoneCall className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleCall(String(f._id), realName, "audio")}>
-                        <Phone className="mr-2 h-4 w-4" />
-                        Audio Call
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleCall(String(f._id), realName, "video")}>
-                        <Video className="mr-2 h-4 w-4" />
-                        Video Call
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {mode === "audio" && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={isCalling}
+                      onClick={() => handleCall(String(f._id), realName, "audio")}
+                      title="Audio call"
+                    >
+                      <PhoneCall className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {mode === "video" && (
+                    <Button
+                      variant="default"
+                      size="icon"
+                      disabled={isCalling}
+                      onClick={() => handleCall(String(f._id), realName, "video")}
+                      title="Video call"
+                    >
+                      <VideoIcon className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
 
                 <Button

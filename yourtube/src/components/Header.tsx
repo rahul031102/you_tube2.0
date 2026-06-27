@@ -261,21 +261,32 @@ const Header = ({ onMenuClick }: HeaderProps) => {
       <div className="flex items-center gap-1 sm:gap-2 pr-1 sm:pr-0">
         {user ? (
           <>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-9 h-9 sm:w-10 sm:h-10">
-                  <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => router.push("/calls?mode=audio")}>
-                  <PhoneCall className="w-4 h-4 mr-2" /> Audio Call
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/calls?mode=video")}>
-                  <VideoIcon className="w-4 h-4 mr-2" /> Video Call
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Desktop: 2 separate buttons */}
+            <Button variant="ghost" size="icon" className="hidden sm:flex w-10 h-10" onClick={() => router.push("/calls?mode=audio")} title="Audio Call">
+              <PhoneCall className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="hidden sm:flex w-10 h-10" onClick={() => router.push("/calls?mode=video")} title="Video Call">
+              <VideoIcon className="w-5 h-5" />
+            </Button>
+
+            {/* Mobile: dropdown menu */}
+            <div className="sm:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="w-9 h-9">
+                    <PhoneCall className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => router.push("/calls?mode=audio")}>
+                    <PhoneCall className="w-4 h-4 mr-2" /> Audio Call
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push("/calls?mode=video")}>
+                    <VideoIcon className="w-4 h-4 mr-2" /> Video Call
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
             <Button variant="ghost" size="icon">
               <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
