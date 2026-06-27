@@ -136,21 +136,31 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   }, [user, router]);
 
   useEffect(() => {
-    const playBeep = () => {
+    const playRingtone = () => {
       try {
         const ctx = audioCtxRef.current || new (window.AudioContext || (window as any).webkitAudioContext)();
         audioCtxRef.current = ctx;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.frequency.value = 800;
-        osc.type = "sine";
-        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.4);
+        const now = ctx.currentTime;
+        const notes = [784, 659, 784];
+
+        notes.forEach((frequency, index) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const startTime = now + index * 0.18;
+          const stopTime = startTime + 0.16;
+
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(frequency, startTime);
+
+          gain.gain.setValueAtTime(0.0001, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.14, startTime + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, stopTime);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(stopTime);
+        });
       } catch (e) { }
     };
 
@@ -159,8 +169,8 @@ const Header = ({ onMenuClick }: HeaderProps) => {
     //   ringIntervalRef.current = window.setInterval(playBeep, 1000);
     // } else if (ringIntervalRef.current) {
     if (incoming) {
-      playBeep();
-      ringIntervalRef.current = window.setInterval(playBeep, 1000);
+      playRingtone();
+      ringIntervalRef.current = window.setInterval(playRingtone, 1200);
       if (typeof Notification !== "undefined" && Notification.permission === "granted") {
         try {
           new Notification("Incoming call", {
