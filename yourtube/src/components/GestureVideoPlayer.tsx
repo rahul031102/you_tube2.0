@@ -845,7 +845,7 @@ export default function GestureVideoPlayer({ video, allVideos }: GestureVideoPla
               {/* watch limit zone */}
               {watchLimitSeconds && duration && (
                 <div
-                  className="absolute top-0 h-full bg-yellow-500/50 rounded-full"
+                  className="absolute top-0 h-full bg-gray-500/50 rounded-full"
                   style={{ width: `${limitPct}%` }}
                 />
               )}
