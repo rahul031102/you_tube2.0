@@ -175,7 +175,7 @@ export const verifyOtp = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    return res.status(200).json({ message: "OTP verified.", user });
+    return res.status(200).json({ message: "OTP is verified.", user });
   } catch (error) {
     console.error("Verify OTP error:", error);
     return res.status(500).json({ message: "Unable to verify OTP." });
