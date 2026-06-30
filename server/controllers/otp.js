@@ -6,27 +6,20 @@ import { sendSms, verifySmsOtp } from "../utils/sms.js";
 
 const OTP_TTL_MINUTES = 10;
 
-const NORTH_INDIAN_STATES = [
-  "delhi",
-  "national capital territory of delhi",
-  "punjab",
-  "haryana",
-  "himachal pradesh",
-  "jammu and kashmir",
-  "jammu & kashmir",
-  "uttarakhand",
-  "uttar pradesh",
-  "rajasthan",
-  "ladakh",
-  "chandigarh",
+const SOUTH_INDIAN_STATES = [
+  "tamil nadu",
+  "kerala",
+  "karnataka",
+  "andhra pradesh",
+  "telangana",
 ];
 
 const normalize = (value) => (value || "").trim().toLowerCase();
 
-const isNorthIndia = ({ region, country, countryCode }) => {
+const isSouthIndia = ({ region, country, countryCode }) => {
   const india =
     normalize(country) === "india" || normalize(countryCode) === "in";
-  return india && NORTH_INDIAN_STATES.includes(normalize(region));
+  return india && SOUTH_INDIAN_STATES.includes(normalize(region));
 };
 
 const generateOtp = () => String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
@@ -57,9 +50,10 @@ export const requestOtp = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    const northIndia = isNorthIndia({ region, country, countryCode });
-    // North India -> SMS OTP. Everywhere else (including South India & other countries) -> email OTP.
-    let channel = northIndia && !forceEmail ? "sms" : "email";
+    const southIndia = isSouthIndia({ region, country, countryCode });
+    // South India -> email OTP (as per task spec).
+    // Everywhere else -> SMS OTP.
+    let channel = southIndia || forceEmail ? "email" : "sms";
 
     if (channel === "sms" && !user.phone) {
       return res.status(400).json({
