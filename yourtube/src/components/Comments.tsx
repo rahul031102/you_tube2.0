@@ -247,8 +247,11 @@ const Comments = ({ videoId }: any) => {
             <div className="flex gap-2 justify-end">
               <Button
                 variant="ghost"
-                onClick={() => setNewComment("")}
-                disabled={!newComment.trim()}
+                onClick={() => {
+                  setNewComment("");
+                  setInlineError(null);
+                }}
+                disabled={!newComment.trim() && !inlineError}
               >
                 Cancel
               </Button>
@@ -306,6 +309,7 @@ const Comments = ({ videoId }: any) => {
                           onClick={() => {
                             setEditingCommentId(null);
                             setEditText("");
+                            setEditError(null);
                           }}
                         >
                           Cancel
