@@ -117,10 +117,10 @@ export default function registerSignaling(io) {
 
     // caller cancels before the callee has responded
     socket.on("call-cancel", ({ targetUserId, roomId }) => {
-      if (!socket.data?.userId) return;
+      const senderUserId = socket.data?.userId;
       const targetSockets = Array.from(io.sockets.sockets.values())
         .filter(s => String(s.data?.userId) === String(targetUserId));
-      targetSockets.forEach(s => s.emit("call-cancelled", { roomId }));
+      targetSockets.forEach(s => s.emit("call-cancelled", { roomId, fromUserId: senderUserId }));
     });
 
     socket.on("offer", ({ target, sdp }) => {

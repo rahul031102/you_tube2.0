@@ -117,8 +117,16 @@ const Header = ({ onMenuClick }: HeaderProps) => {
     };
     socket.on("call-unavailable", onUnavailable);
 
-    const onCancelled = ({ roomId }: any) => {
-      setIncoming((prev: any) => (prev?.roomId === roomId ? null : prev));
+    const onCancelled = ({ roomId, fromUserId }: any) => {
+      setIncoming((prev: any) => {
+        if (!prev) return null;
+        const matchesRoom = roomId && prev.roomId === roomId;
+        const matchesUser = fromUserId && prev.fromUserId === fromUserId;
+        if (matchesRoom || matchesUser) {
+          return null;
+        }
+        return prev;
+      });
     };
     socket.on("call-cancelled", onCancelled);
 
