@@ -1,5 +1,4 @@
 import { Bell, Menu, Mic, Search, User, VideoIcon, PhoneCall, PhoneOff } from "lucide-react";
-// import { Bell, Menu, Mic, Search, User, VideoIcon, PhoneCall ,phoneoff} from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -21,16 +20,6 @@ import Channeldialogue from "./channeldialogue";
 import { useRouter } from "next/router";
 import { useUser } from "@/lib/AuthContext";
 import { getSocket } from "@/lib/socket";
-
-// const Header = () => {
-//   const { user, logout, handlegooglesignin } = useUser();
-//   // const user: any = {
-//   //   id: "1",
-//   //   name: "John Doe",
-//   //   email: "john@example.com",
-//   //   image: "https://github.com/shadcn.png?height=32&width=32",
-//   // };
-//   const [searchQuery, setSearchQuery] = useState("");
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -178,10 +167,6 @@ const Header = ({ onMenuClick }: HeaderProps) => {
       } catch (e) { }
     };
 
-    // if (incoming) {
-    //   playBeep();
-    //   ringIntervalRef.current = window.setInterval(playBeep, 1000);
-    // } else if (ringIntervalRef.current) {
     if (incoming) {
       playRingtone();
       ringIntervalRef.current = window.setInterval(playRingtone, 1200);
@@ -226,12 +211,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   };
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-background text-foreground border-b fixed top-0 left-0 right-0 z-30">
-      {/* // <header className="flex items-center justify-between px-4 py-2 bg-background text-foreground border-b"> */}
       <div className="flex items-center gap-2 sm:gap-4">
-        {/* <Button variant="ghost" size="icon">
-          <Menu className="w-6 h-6" />
-        </Button> */}
-
         <Button variant="ghost" size="icon" onClick={onMenuClick}>
           <Menu className="w-6 h-6" />
         </Button>
@@ -249,7 +229,6 @@ const Header = ({ onMenuClick }: HeaderProps) => {
       <form
         onSubmit={handleSearch}
         className="hidden sm:flex items-center gap-2 flex-1 max-w-2xl mx-4"
-      // className="flex items-center gap-2 flex-1 max-w-2xl mx-4"
       >
         <div className="flex flex-1">
           <Input
